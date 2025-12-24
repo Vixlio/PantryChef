@@ -94,6 +94,10 @@ def get_recipe(images, style):
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
+# Initialize Camera State (Default: False/Closed)
+if 'camera_open' not in st.session_state:
+    st.session_state.camera_open = False
+
 # A. LOGO SECTION
 logo_path = None
 if os.path.exists("logo.png"): logo_path = "logo.png"
@@ -119,48 +123,63 @@ st.write("")
 st.write("")
 
 # B. INPUT AREA
-st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
+# We use a placeholder container for the camera logic
+camera_placeholder = st.empty()
 
-col1, col2, col3 = st.columns([1, 10, 1])
-with col2:
-    camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
-    if camera_photo:
-        img = Image.open(camera_photo)
-        st.session_state.ingredient_images.append(img)
+# LOGIC:
+# If camera is NOT open, show the "Start" button
+if not st.session_state.camera_open:
+    st.write("")
+    st.write("")
+    # Big, welcoming start button
+    if st.button("📸 Tap to Start Cooking", use_container_width=True):
+        st.session_state.camera_open = True
+        st.rerun()
 
-    if len(st.session_state.ingredient_images) > 0:
-        st.write("---")
-        st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
-        
-        cols = st.columns(3)
-        for idx, img in enumerate(st.session_state.ingredient_images):
-            with cols[idx % 3]:
-                st.image(img, use_container_width=True)
-                
-        if st.button("Clear Photos & Start Over"):
-            st.session_state.ingredient_images = []
-            st.rerun()
+# If camera IS open, show the camera input
+else:
+    st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 10, 1])
+    with col2:
+        camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
+        if camera_photo:
+            img = Image.open(camera_photo)
+            st.session_state.ingredient_images.append(img)
+
+# C. PHOTO GALLERY (Always visible if images exist)
+if len(st.session_state.ingredient_images) > 0:
+    st.write("---")
+    st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
+    
+    cols = st.columns(3)
+    for idx, img in enumerate(st.session_state.ingredient_images):
+        with cols[idx % 3]:
+            st.image(img, use_container_width=True)
+            
+    if st.button("Clear Photos & Start Over"):
+        st.session_state.ingredient_images = []
+        # Optional: Close camera on clear? 
+        # st.session_state.camera_open = False 
+        st.rerun()
 
     st.write("") 
-    if len(st.session_state.ingredient_images) > 0:
+    
+    # --- VIBE SELECTOR ---
+    cooking_style = st.selectbox(
+        "What's the vibe today?", 
+        ["🥗 Healthy & Clean", "👨‍🍳 Standard / Modern", "👧 For the Kids", "🍔 Let Myself Go"],
+        index=1
+    )
+    st.write("")
+    
+    if st.button("Generate Recipe", use_container_width=True):
+        if 'recipe_result' in st.session_state:
+            del st.session_state['recipe_result']
         
-        # --- NEW: VIBE SELECTOR ---
-        # We put this in a centered container just above the button
-        cooking_style = st.selectbox(
-            "What's the vibe today?", 
-            ["🥗 Healthy & Clean", "👨‍🍳 Standard / Modern", "👧 For the Kids", "🍔 Let Myself Go"],
-            index=1
-        )
-        st.write("") # tiny spacer
-        
-        if st.button("Generate Recipe", use_container_width=True):
-            if 'recipe_result' in st.session_state:
-                del st.session_state['recipe_result']
-            
-            # Pass the style to the function
-            result = get_recipe(st.session_state.ingredient_images, cooking_style)
-            st.session_state.recipe_result = result
-            st.rerun()
+        result = get_recipe(st.session_state.ingredient_images, cooking_style)
+        st.session_state.recipe_result = result
+        st.rerun()
 
 # --- 7. RESULTS DISPLAY ---
 if 'recipe_result' in st.session_state and st.session_state.recipe_result:

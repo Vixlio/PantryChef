@@ -73,7 +73,7 @@ def get_recipe(image_input):
 
 # --- 5. APP LAYOUT ---
 
-# A. SMART LOGO LOADER
+# A. SMART LOGO LOADER (Everything in one column now)
 left_co, cent_co, last_co = st.columns([1, 4, 1])
 
 with cent_co:
@@ -87,12 +87,12 @@ with cent_co:
         st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
         st.error("⚠️ Tip: Upload 'logo.png' to GitHub!")
 
-# B. SUBTITLE (With Negative Margin to pull it up)
-st.markdown("""
-    <p style='text-align: center; color: #666; margin-top: -10px; font-size: 16px;'>
-        Visual Intelligence for Your Fridge
-    </p>
-""", unsafe_allow_html=True)
+    # B. SUBTITLE (Now INSIDE the column with aggressive negative margin)
+    st.markdown("""
+        <p style='text-align: center; color: #666; margin-top: -25px; font-size: 16px;'>
+            Visual Intelligence for Your Fridge
+        </p>
+    """, unsafe_allow_html=True)
 
 # C. INPUT AREA
 col1, col2, col3 = st.columns([1, 6, 1])

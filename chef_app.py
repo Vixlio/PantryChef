@@ -74,11 +74,11 @@ with cent_co:
     # TRY to load the logo. If it fails, show text instead.
     try:
         # Make sure your file on GitHub is named EXACTLY "logo.png" (case sensitive!)
-        st.image("logo.png", width=300) 
+        st.image("logo.png", width=350) 
     except:
         st.error("Logo not found. Upload 'logo.png' to GitHub!")
 
-st.markdown("Visual Intelligence for Your Fridge")
+st.markdown("Visual Intelligence for Your Kitchen")
 
 # 2. The Input Area
 col1, col2, col3 = st.columns([1, 6, 1])

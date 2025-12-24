@@ -11,27 +11,23 @@ if "GEMINI_API_KEY" in st.secrets:
 else:
     api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
-# --- CUSTOM CSS (Google Style Buttons & Centering) ---
+# --- CUSTOM CSS ---
 st.markdown("""
     <style>
-        /* Center text generally */
         .stMarkdown p {
             text-align: center;
             color: #666;
         }
-
-        /* Style the "Cook" Button to look like "Google Search" */
         div.stButton > button {
             display: block;
             margin: 0 auto;
-            background-color: #f8f9fa; /* Google Light Gray */
+            background-color: #f8f9fa; 
             color: #3c4043;
             border: 1px solid #f8f9fa;
             border-radius: 4px;
             padding: 10px 24px;
             font-size: 14px;
             font-weight: 500;
-            transition: all 0.3s;
         }
         div.stButton > button:hover {
             background-color: #f8f9fa;
@@ -39,8 +35,6 @@ st.markdown("""
             box-shadow: 0 1px 1px rgba(0,0,0,.1);
             color: #202124;
         }
-        
-        /* Hide footer */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
     </style>
@@ -53,7 +47,6 @@ def get_recipe(image_input):
     
     try:
         genai.configure(api_key=api_key)
-        # Using the "Lite" model that fits your quota
         model = genai.GenerativeModel('gemini-2.5-flash-lite') 
         
         prompt = """
@@ -72,25 +65,26 @@ def get_recipe(image_input):
 
 # --- APP LAYOUT ---
 
-# 1. THE NEW LOGO HEADER
-# We use HTML to create a styled logo instead of plain text
-st.markdown("""
-    <div style='text-align: center; margin-bottom: 30px;'>
-        <span style='font-size: 60px;'>👨‍🍳</span>
-        <span style='font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700; font-size: 50px; color: #333; margin: 0 10px;'>ChefLens</span>
-        <span style='font-size: 60px;'>📷</span>
-        <br>
-        <span style='font-size: 18px; color: #666;'>Visual Intelligence for Your Fridge</span>
-    </div>
-""", unsafe_allow_html=True)
+# 1. THE LOGO (Real Image Version)
+# We use columns to center the image. 
+# [1, 2, 1] means: (Empty Space) - (Logo) - (Empty Space)
+left_co, cent_co, last_co = st.columns([1, 2, 1])
 
-# 2. The Input Area (Centered Column)
+with cent_co:
+    # TRY to load the logo. If it fails, show text instead.
+    try:
+        # Make sure your file on GitHub is named EXACTLY "logo.png" (case sensitive!)
+        st.image("logo.png", width=300) 
+    except:
+        st.error("Logo not found. Upload 'logo.png' to GitHub!")
+
+st.markdown("Visual Intelligence for Your Fridge")
+
+# 2. The Input Area
 col1, col2, col3 = st.columns([1, 6, 1])
 
 with col2:
-    # Tabs for Input Method
     tab_cam, tab_up = st.tabs(["📸 Camera", "📂 Upload"])
-    
     image_to_process = None
     
     with tab_cam:
@@ -103,11 +97,9 @@ with col2:
         if uploaded_file:
             image_to_process = Image.open(uploaded_file)
 
-    # 4. The Action Button
-    st.write("") # Spacer
+    st.write("")
     if image_to_process:
         if st.button("Generate Recipe"):
-            # Clear previous state
             if 'recipe_result' in st.session_state:
                 del st.session_state['recipe_result']
             
@@ -115,10 +107,9 @@ with col2:
             st.session_state.recipe_result = result
             st.rerun()
 
-# --- RESULTS SECTION ---
+# --- RESULTS ---
 if 'recipe_result' in st.session_state and st.session_state.recipe_result:
-    st.markdown("---") # A subtle divider
-    
+    st.markdown("---")
     if "Error" in st.session_state.recipe_result:
         st.error(st.session_state.recipe_result)
     else:

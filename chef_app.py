@@ -96,11 +96,15 @@ def get_recipe(images, style):
         return f"Error: {e}"
 
 # --- 6. APP LAYOUT ---
+
+# Initialize Session State
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
-
 if 'camera_open' not in st.session_state:
     st.session_state.camera_open = False
+# KEY TRICK: This allows us to reset the camera widget manually
+if 'camera_key' not in st.session_state:
+    st.session_state.camera_key = 0
 
 # A. LOGO SECTION
 logo_path = None
@@ -111,7 +115,7 @@ elif os.path.exists("logo.PNG"): logo_path = "logo.PNG"
 if logo_path:
     img_base64 = get_base64_image(logo_path)
     st.markdown(
-        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 600px; max-width: 90vw;">',
+        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 800px; max-width: 90vw;">',
         unsafe_allow_html=True,
     )
 else:
@@ -119,7 +123,7 @@ else:
 
 st.markdown("""
     <p style='text-align: center; margin-top: -20px; font-size: 16px; opacity: 0.8;'>
-        Visual Intelligence for Your Kitchen
+        Visual Intelligence for Your Kitchen, Powered by Google
     </p>
 """, unsafe_allow_html=True)
 
@@ -133,38 +137,56 @@ camera_placeholder = st.empty()
 if not st.session_state.camera_open:
     st.markdown("""
         <p style='text-align: center; color: #666; font-size: 18px; max-width: 80%; margin: 0 auto;'>
-            Snap a photo of your fridge, pantry, or leftovers.<br>
-            We'll cook up a custom recipe in seconds.
+            Snap a photo of your fridge, pantry, or leftovers. We'll cook up a custom recipe in seconds. We will even let you pick how healthy or unhealthy you want it to be.
         </p>
     """, unsafe_allow_html=True)
     
     st.write("")
     st.write("")
     
-    if st.button("Open Kitchen Camera", type="primary", use_container_width=True):
+    if st.button("Open Camera", type="primary", use_container_width=True):
         st.session_state.camera_open = True
         st.rerun()
 
 # --- STATE 2: CAMERA OPEN ---
 else:
-    st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
+    # UPDATED HEADER TEXT
+    st.markdown("<h3 style='text-align: center; font-size: 20px;'>Add Ingredients to Basket</h3>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
-        camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
+        # We use the dynamic key to force resets
+        camera_photo = st.camera_input(
+            label="Snap Photo", 
+            label_visibility="hidden", 
+            key=f"camera_{st.session_state.camera_key}"
+        )
+        
+        # --- NEW REVIEW LOGIC ---
         if camera_photo:
-            img = Image.open(camera_photo)
-            st.session_state.ingredient_images.append(img)
+            st.write("")
+            # Review Buttons
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("✅ Add to Basket", type="primary", use_container_width=True):
+                    img = Image.open(camera_photo)
+                    st.session_state.ingredient_images.append(img)
+                    # Increment key to RESET camera for next shot
+                    st.session_state.camera_key += 1
+                    st.rerun()
+            with c2:
+                if st.button("🔄 Redo Photo", use_container_width=True):
+                    # Increment key to RESET camera without adding
+                    st.session_state.camera_key += 1
+                    st.rerun()
 
-# C. REVIEW BASKET (THE NEW CLEAN LOOK)
+# C. REVIEW BASKET
 if len(st.session_state.ingredient_images) > 0:
     st.write("")
     
-    # We use a container with a border to group the "Review" stage visually
     with st.container(border=True):
         st.markdown(f"<p style='text-align: center; margin-bottom: 10px;'><b>🛒 Your Basket ({len(st.session_state.ingredient_images)} items)</b></p>", unsafe_allow_html=True)
         
-        # Bigger Grid (2 Columns instead of 3 for better visibility)
         cols = st.columns(2)
         for idx, img in enumerate(st.session_state.ingredient_images):
             with cols[idx % 2]:
@@ -172,15 +194,19 @@ if len(st.session_state.ingredient_images) > 0:
         
         st.write("")
         
-        # EDIT CONTROLS (Undo vs Clear)
+        # EDIT CONTROLS
         c1, c2 = st.columns(2)
         with c1:
             if st.button("↩️ Undo Last", use_container_width=True):
-                st.session_state.ingredient_images.pop()
-                st.rerun()
+                if st.session_state.ingredient_images:
+                    st.session_state.ingredient_images.pop()
+                    # CRITICAL FIX: Reset camera so it doesn't auto-add the old buffer
+                    st.session_state.camera_key += 1
+                    st.rerun()
         with c2:
             if st.button("🗑️ Clear All", use_container_width=True):
                 st.session_state.ingredient_images = []
+                st.session_state.camera_key += 1
                 st.rerun()
 
     st.write("") 
@@ -193,7 +219,7 @@ if len(st.session_state.ingredient_images) > 0:
     )
     st.write("")
     
-    # Primary Generate Button (PURPLE)
+    # Primary Generate Button
     if st.button("Generate Recipe", type="primary", use_container_width=True):
         if 'recipe_result' in st.session_state:
             del st.session_state['recipe_result']

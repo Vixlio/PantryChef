@@ -27,11 +27,11 @@ st.markdown("""
         h1, h3, p { text-align: center !important; }
         .block-container { padding-top: 1rem; padding-bottom: 0rem; }
         
-        /* GENERAL BUTTON STYLE (The Pill Shape) */
+        /* GENERAL BUTTON STYLE (Pill shape, BIGGER FONT 18px) */
         div.stButton > button {
             border-radius: 50px;
-            padding: 12px 28px;
-            font-size: 16px;
+            padding: 14px 32px; /* Slightly more padding for bigger font */
+            font-size: 18px; /* BIGGER FONT */
             font-weight: 600;
             border: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -42,6 +42,18 @@ st.markdown("""
         div.stButton > button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+
+        /* PURPLE PRIMARY BUTTONS */
+        /* This specifically targets the "type='primary'" buttons */
+        button[kind="primary"] {
+            background-color: #8A2BE2 !important; /* Nice Purple */
+            border: 1px solid #8A2BE2 !important;
+            color: white !important;
+        }
+         button[kind="primary"]:hover {
+            background-color: #6A1B9A !important; /* Darker Purple hover */
+            border: 1px solid #6A1B9A !important;
         }
 
         #MainMenu {visibility: hidden;} 
@@ -117,8 +129,9 @@ elif os.path.exists("logo.PNG"): logo_path = "logo.PNG"
 
 if logo_path:
     img_base64 = get_base64_image(logo_path)
+    # INCREASED SIZE to 600px
     st.markdown(
-        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 500px; max-width: 90vw;">',
+        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 600px; max-width: 90vw;">',
         unsafe_allow_html=True,
     )
 else:
@@ -138,9 +151,9 @@ camera_placeholder = st.empty()
 
 # --- STATE 1: START SCREEN ---
 if not st.session_state.camera_open:
-    # Disclaimer Text
+    # Disclaimer Text - BIGGER FONT (18px)
     st.markdown("""
-        <p style='text-align: center; color: #666; font-size: 15px; max-width: 80%; margin: 0 auto;'>
+        <p style='text-align: center; color: #666; font-size: 18px; max-width: 80%; margin: 0 auto;'>
             Snap a photo of your fridge, pantry, or leftovers.<br>
             We'll cook up a custom recipe in seconds.
         </p>
@@ -149,8 +162,8 @@ if not st.session_state.camera_open:
     st.write("") # Spacer
     st.write("")
     
-    # Primary Start Button
-    if st.button("📸 Open Kitchen Camera", type="primary", use_container_width=True):
+    # Primary Start Button - PURPLE, NO EMOJI
+    if st.button("Open Kitchen Camera", type="primary", use_container_width=True):
         st.session_state.camera_open = True
         st.rerun()
 
@@ -175,7 +188,7 @@ if len(st.session_state.ingredient_images) > 0:
         with cols[idx % 3]:
             st.image(img, use_container_width=True)
             
-    # Secondary Clear Button
+    # Secondary Clear Button (Gray)
     if st.button("Clear Photos & Start Over"):
         st.session_state.ingredient_images = []
         st.rerun()
@@ -190,7 +203,7 @@ if len(st.session_state.ingredient_images) > 0:
     )
     st.write("")
     
-    # Primary Generate Button
+    # Primary Generate Button (PURPLE)
     if st.button("Generate Recipe", type="primary", use_container_width=True):
         if 'recipe_result' in st.session_state:
             del st.session_state['recipe_result']

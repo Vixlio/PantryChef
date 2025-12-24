@@ -18,22 +18,25 @@ else:
 # --- 3. CUSTOM CSS ---
 st.markdown("""
     <style>
-        /* 1. FORCE ALL IMAGES TO CENTER */
+        /* 1. FORCE LOGO & IMAGES TO CENTER (MOBILE & DESKTOP) */
+        /* This Flexbox rule creates a strong magnetic pull to the center */
         div[data-testid="stImage"] {
             display: flex;
             justify-content: center;
+            align-items: center;
+            width: 100%;
         }
         
-        /* 2. REMOVE TOP PADDING */
+        /* 2. CENTER ALL TEXT HEADERS */
+        /* We do not specify color, so it adapts to Light/Dark mode automatically */
+        h1, h3, p {
+            text-align: center !important;
+        }
+
+        /* 3. REMOVE TOP PADDING */
         .block-container {
             padding-top: 2rem;
             padding-bottom: 0rem;
-        }
-        
-        /* 3. CENTER TEXT & FIX COLORS FOR DARK MODE */
-        .stMarkdown p, .stMarkdown h3 {
-            text-align: center !important;
-            color: #E0E0E0 !important; /* Light Gray for visibility */
         }
         
         /* 4. BUTTON STYLES */
@@ -92,37 +95,36 @@ def get_recipe(images):
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
-# A. LOGO SECTION (Centered Column Sandwich)
-# We use [1, 2, 1] to squeeze the logo into the center
-left_co, cent_co, last_co = st.columns([1, 2, 1])
+# A. LOGO SECTION (No Columns - Pure CSS Centering)
+if os.path.exists("logo.png"):
+    # We use 300px which is safe for mobile screens
+    st.image("logo.png", width=300) 
+elif os.path.exists("Logo.png"):
+    st.image("Logo.png", width=300)
+elif os.path.exists("logo.PNG"):
+    st.image("logo.PNG", width=300)
+else:
+    # Fallback text if no logo
+    st.markdown("<h1 style='text-align: center;'>ChefLens</h1>", unsafe_allow_html=True)
 
-with cent_co:
-    if os.path.exists("logo.png"):
-        st.image("logo.png", width=350) 
-    elif os.path.exists("Logo.png"):
-        st.image("Logo.png", width=350)
-    elif os.path.exists("logo.PNG"):
-        st.image("logo.PNG", width=350)
-    else:
-        st.markdown("<h1 style='text-align: center; color: white;'>ChefLens</h1>", unsafe_allow_html=True)
-
-    # Subtitle (Light Gray)
-    st.markdown("""
-        <p style='text-align: center; color: #B0B0B0; margin-top: -15px; font-size: 16px;'>
-            Visual Intelligence for Your Kitchen
-        </p>
-    """, unsafe_allow_html=True)
+# Subtitle (No hardcoded color - adapts to theme)
+st.markdown("""
+    <p style='text-align: center; margin-top: -10px; font-size: 16px; opacity: 0.8;'>
+        Visual Intelligence for Your Kitchen
+    </p>
+""", unsafe_allow_html=True)
 
 # Spacer
 st.write("")
 st.write("")
 
 # B. INPUT AREA
-# 1. Custom Centered Header (White Text)
-st.markdown("<h3 style='text-align: center; color: white; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
+# 1. Custom Centered Header
+st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
 
 # 2. Camera Input
-col1, col2, col3 = st.columns([1, 8, 1])
+# We use columns ONLY here to control the width of the camera viewport
+col1, col2, col3 = st.columns([1, 10, 1])
 with col2:
     camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
     
@@ -134,7 +136,8 @@ with col2:
     # C. PHOTO GALLERY (The "Basket")
     if len(st.session_state.ingredient_images) > 0:
         st.write("---")
-        st.markdown(f"<p style='text-align: center; color: white;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
+        # Dynamic text that adapts to theme
+        st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
         
         # Display thumbnails
         cols = st.columns(3)

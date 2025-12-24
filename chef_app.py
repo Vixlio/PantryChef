@@ -12,16 +12,17 @@ if "GEMINI_API_KEY" in st.secrets:
 else:
     api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
-# --- 3. CUSTOM CSS (Tight & Modern) ---
+# --- 3. CUSTOM CSS ---
 st.markdown("""
     <style>
-        /* REMOVE DEFAULT TOP PADDING */
         .block-container {
             padding-top: 1rem;
             padding-bottom: 0rem;
         }
-        
-        /* Google-style Button */
+        .stMarkdown p {
+            text-align: center;
+            color: #666;
+        }
         div.stButton > button {
             display: block;
             margin: 0 auto;
@@ -40,8 +41,6 @@ st.markdown("""
             box-shadow: 0 1px 1px rgba(0,0,0,.1);
             color: #202124;
         }
-        
-        /* Clean up layout */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
@@ -49,24 +48,26 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 4. THE BRAIN ---
-def get_recipe(image_input):
+def get_recipe(images):
     if not api_key:
         return "🚨 Error: No API Key provided."
     
     try:
         genai.configure(api_key=api_key)
-        # Using the "Lite" model (10 requests/min limit)
         model = genai.GenerativeModel('gemini-2.5-flash-lite') 
         
         prompt = """
-        You are a smart kitchen AI. Analyze this image.
-        1. List the ingredients you see.
-        2. Create a modern, delicious recipe.
+        You are a smart kitchen AI. Analyze these images of a kitchen/pantry.
+        1. List ALL ingredients you see across all photos.
+        2. Create a modern, delicious recipe using these items.
         3. Format the output cleanly with bold headers.
         """
         
-        with st.spinner("Analyzing pixels..."):
-            response = model.generate_content([prompt, image_input])
+        # We create a list containing the prompt + ALL images
+        content = [prompt] + images
+        
+        with st.spinner(f"Analyzing {len(images)} photos..."):
+            response = model.generate_content(content)
             return response.text
             
     except Exception as e:
@@ -74,9 +75,12 @@ def get_recipe(image_input):
 
 # --- 5. APP LAYOUT ---
 
-# A. SMART LOGO LOADER (Everything in one column now)
-left_co, cent_co, last_co = st.columns([1, 4, 1])
+# Initialize Session State for the "Basket" of images
+if 'ingredient_images' not in st.session_state:
+    st.session_state.ingredient_images = []
 
+# A. HEADER
+left_co, cent_co, last_co = st.columns([1, 4, 1])
 with cent_co:
     if os.path.exists("logo.png"):
         st.image("logo.png", width=350)
@@ -86,8 +90,67 @@ with cent_co:
         st.image("logo.PNG", width=350)
     else:
         st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
-        st.error("⚠️ Tip: Upload 'logo.png' to GitHub!")
 
-    # B. SUBTITLE (Updated Text & Centered)
     st.markdown("""
-        <p style='text-align: center; color:
+        <p style='text-align: center; color: #666; margin-top: -25px; font-size: 16px;'>
+            Visual Intelligence for Your Kitchen
+        </p>
+    """, unsafe_allow_html=True)
+
+# B. INPUT AREA
+col1, col2, col3 = st.columns([1, 6, 1])
+
+with col2:
+    # 1. FILE UPLOADER (Accepts Multiple)
+    uploaded_files = st.file_uploader("Upload photos (Fridge, Pantry, Freezer)", 
+                                    type=["jpg", "png", "jpeg"], 
+                                    accept_multiple_files=True)
+    
+    # Logic: If user uploads files, we add them to our list
+    current_images = []
+    
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            image = Image.open(uploaded_file)
+            current_images.append(image)
+
+    # 2. CAMERA (Optional Addition)
+    # Note: Streamlit Camera clears itself on refresh, so mixing cam + upload 
+    # is tricky. For now, we show the camera below the upload.
+    camera_photo = st.camera_input("Or snap a photo")
+    if camera_photo:
+        cam_image = Image.open(camera_photo)
+        current_images.append(cam_image)
+
+    # C. PREVIEW GALLERY
+    # Show small thumbnails of what we are about to cook
+    if current_images:
+        st.write("---")
+        st.caption(f"Analyzing {len(current_images)} photos:")
+        # Display images in a row
+        cols = st.columns(len(current_images))
+        for idx, img in enumerate(current_images):
+            with cols[idx]:
+                st.image(img, use_container_width=True)
+
+    # D. ACTION BUTTON
+    st.write("") 
+    if current_images:
+        if st.button("Generate Recipe"):
+            if 'recipe_result' in st.session_state:
+                del st.session_state['recipe_result']
+            
+            # Pass the WHOLE LIST of images to the AI
+            result = get_recipe(current_images)
+            st.session_state.recipe_result = result
+            st.rerun()
+
+# --- 6. RESULTS DISPLAY ---
+if 'recipe_result' in st.session_state and st.session_state.recipe_result:
+    st.markdown("---")
+    
+    if "Error" in st.session_state.recipe_result:
+        st.error(st.session_state.recipe_result)
+    else:
+        st.subheader("👨‍🍳 Result")
+        st.markdown(st.session_state.recipe_result)

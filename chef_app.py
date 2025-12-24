@@ -27,32 +27,29 @@ st.markdown("""
         h1, h3, p { text-align: center !important; }
         .block-container { padding-top: 1rem; padding-bottom: 0rem; }
         
-        /* GENERAL BUTTON STYLE (Pill shape, BIGGER FONT 18px) */
+        /* GENERAL BUTTON STYLE */
         div.stButton > button {
             border-radius: 50px;
-            padding: 14px 32px; /* Slightly more padding for bigger font */
-            font-size: 18px; /* BIGGER FONT */
+            padding: 14px 32px;
+            font-size: 18px;
             font-weight: 600;
             border: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
         }
-        
-        /* HOVER EFFECT */
         div.stButton > button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
 
         /* PURPLE PRIMARY BUTTONS */
-        /* This specifically targets the "type='primary'" buttons */
         button[kind="primary"] {
-            background-color: #8A2BE2 !important; /* Nice Purple */
+            background-color: #8A2BE2 !important;
             border: 1px solid #8A2BE2 !important;
             color: white !important;
         }
          button[kind="primary"]:hover {
-            background-color: #6A1B9A !important; /* Darker Purple hover */
+            background-color: #6A1B9A !important;
             border: 1px solid #6A1B9A !important;
         }
 
@@ -80,31 +77,15 @@ def get_recipe(images, style):
         
         # STYLE MODIFIERS
         if style == "🥗 Healthy & Clean":
-            style_instruction = """
-            STYLE: HEALTHY & CLEAN.
-            - Focus on nutrition, low calorie, and fresh ingredients.
-            - Explain the health benefits of the dish.
-            - Tone: Encouraging, wellness-focused, 'body is a temple'.
-            """
+            style_instruction = "STYLE: HEALTHY. Focus on nutrition, low calorie, and fresh ingredients."
         elif style == "👧 For the Kids":
-            style_instruction = """
-            STYLE: KID FRIENDLY.
-            - Make it fun, colorful, and easy to eat.
-            - Hide vegetables if possible or make them appealing.
-            - Tone: Playful, exciting, maybe a joke about the food.
-            """
+            style_instruction = "STYLE: KID FRIENDLY. Make it fun, colorful, and hide veggies if needed."
         elif style == "🍔 Let Myself Go":
-            style_instruction = """
-            STYLE: CHEAT MEAL / INDULGENT.
-            - Ignore calories. Use maximum butter, cheese, and flavor.
-            - This is comfort food. Make it decadent.
-            - Tone: Enthusiastic, hungry, 'treat yourself', 'YOLO'.
-            """
-        else: # Standard
-            style_instruction = "STYLE: Modern & Delicious. Just a great standard recipe."
+            style_instruction = "STYLE: INDULGENT. Maximum flavor, cheese, butter. Comfort food."
+        else: 
+            style_instruction = "STYLE: Modern & Delicious. Standard chef quality."
             
         final_prompt = base_prompt + style_instruction + "\n3. Format the output cleanly with bold headers."
-        
         content = [final_prompt] + images
         
         with st.spinner(f"Cooking up something {style}..."):
@@ -129,7 +110,6 @@ elif os.path.exists("logo.PNG"): logo_path = "logo.PNG"
 
 if logo_path:
     img_base64 = get_base64_image(logo_path)
-    # INCREASED SIZE to 600px
     st.markdown(
         f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 600px; max-width: 90vw;">',
         unsafe_allow_html=True,
@@ -151,7 +131,6 @@ camera_placeholder = st.empty()
 
 # --- STATE 1: START SCREEN ---
 if not st.session_state.camera_open:
-    # Disclaimer Text - BIGGER FONT (18px)
     st.markdown("""
         <p style='text-align: center; color: #666; font-size: 18px; max-width: 80%; margin: 0 auto;'>
             Snap a photo of your fridge, pantry, or leftovers.<br>
@@ -159,10 +138,9 @@ if not st.session_state.camera_open:
         </p>
     """, unsafe_allow_html=True)
     
-    st.write("") # Spacer
+    st.write("")
     st.write("")
     
-    # Primary Start Button - PURPLE, NO EMOJI
     if st.button("Open Kitchen Camera", type="primary", use_container_width=True):
         st.session_state.camera_open = True
         st.rerun()
@@ -178,20 +156,32 @@ else:
             img = Image.open(camera_photo)
             st.session_state.ingredient_images.append(img)
 
-# C. PHOTO GALLERY
+# C. REVIEW BASKET (THE NEW CLEAN LOOK)
 if len(st.session_state.ingredient_images) > 0:
-    st.write("---")
-    st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
+    st.write("")
     
-    cols = st.columns(3)
-    for idx, img in enumerate(st.session_state.ingredient_images):
-        with cols[idx % 3]:
-            st.image(img, use_container_width=True)
-            
-    # Secondary Clear Button (Gray)
-    if st.button("Clear Photos & Start Over"):
-        st.session_state.ingredient_images = []
-        st.rerun()
+    # We use a container with a border to group the "Review" stage visually
+    with st.container(border=True):
+        st.markdown(f"<p style='text-align: center; margin-bottom: 10px;'><b>🛒 Your Basket ({len(st.session_state.ingredient_images)} items)</b></p>", unsafe_allow_html=True)
+        
+        # Bigger Grid (2 Columns instead of 3 for better visibility)
+        cols = st.columns(2)
+        for idx, img in enumerate(st.session_state.ingredient_images):
+            with cols[idx % 2]:
+                st.image(img, use_container_width=True)
+        
+        st.write("")
+        
+        # EDIT CONTROLS (Undo vs Clear)
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("↩️ Undo Last", use_container_width=True):
+                st.session_state.ingredient_images.pop()
+                st.rerun()
+        with c2:
+            if st.button("🗑️ Clear All", use_container_width=True):
+                st.session_state.ingredient_images = []
+                st.rerun()
 
     st.write("") 
     

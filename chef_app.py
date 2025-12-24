@@ -18,51 +18,28 @@ else:
 
 # --- 3. HELPER FUNCTIONS ---
 def get_base64_image(image_path):
-    """Converts an image file to a base64 string so we can use HTML styling on it."""
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
 # --- 4. CUSTOM CSS ---
 st.markdown("""
     <style>
-        /* 1. CENTER ALL TEXT HEADERS */
-        h1, h3, p {
-            text-align: center !important;
-        }
-
-        /* 2. REMOVE TOP PADDING */
-        .block-container {
-            padding-top: 1rem;
-            padding-bottom: 0rem;
-        }
-        
-        /* 3. BUTTON STYLES */
+        h1, h3, p { text-align: center !important; }
+        .block-container { padding-top: 1rem; padding-bottom: 0rem; }
         div.stButton > button {
-            display: block;
-            margin: 0 auto;
-            background-color: #f8f9fa; 
-            color: #3c4043;
-            border: 1px solid #f8f9fa;
-            border-radius: 4px;
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s;
+            display: block; margin: 0 auto; background-color: #f8f9fa; 
+            color: #3c4043; border: 1px solid #f8f9fa; border-radius: 4px;
+            padding: 10px 24px; font-size: 14px; font-weight: 500; transition: all 0.3s;
         }
         div.stButton > button:hover {
-            background-color: #e8eaed;
-            border: 1px solid #dadce0;
-            color: #202124;
+            background-color: #e8eaed; border: 1px solid #dadce0; color: #202124;
         }
-        
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
+        #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
 # --- 5. THE BRAIN ---
-def get_recipe(images):
+def get_recipe(images, style):
     if not api_key:
         return "🚨 Error: No API Key provided."
     
@@ -70,16 +47,43 @@ def get_recipe(images):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash-lite') 
         
-        prompt = """
+        # BASE PROMPT
+        base_prompt = """
         You are a smart kitchen AI. Analyze these images of a kitchen/pantry.
         1. List ALL ingredients you see across all photos.
-        2. Create a modern, delicious recipe using these items.
-        3. Format the output cleanly with bold headers.
+        2. Create a recipe based on the user's chosen style.
         """
         
-        content = [prompt] + images
+        # STYLE MODIFIERS
+        if style == "🥗 Healthy & Clean":
+            style_instruction = """
+            STYLE: HEALTHY & CLEAN.
+            - Focus on nutrition, low calorie, and fresh ingredients.
+            - Explain the health benefits of the dish.
+            - Tone: Encouraging, wellness-focused, 'body is a temple'.
+            """
+        elif style == "👧 For the Kids":
+            style_instruction = """
+            STYLE: KID FRIENDLY.
+            - Make it fun, colorful, and easy to eat.
+            - Hide vegetables if possible or make them appealing.
+            - Tone: Playful, exciting, maybe a joke about the food.
+            """
+        elif style == "🍔 Let Myself Go":
+            style_instruction = """
+            STYLE: CHEAT MEAL / INDULGENT.
+            - Ignore calories. Use maximum butter, cheese, and flavor.
+            - This is comfort food. Make it decadent.
+            - Tone: Enthusiastic, hungry, 'treat yourself', 'YOLO'.
+            """
+        else: # Standard
+            style_instruction = "STYLE: Modern & Delicious. Just a great standard recipe."
+            
+        final_prompt = base_prompt + style_instruction + "\n3. Format the output cleanly with bold headers."
         
-        with st.spinner(f"Analyzing {len(images)} photos..."):
+        content = [final_prompt] + images
+        
+        with st.spinner(f"Cooking up something {style}..."):
             response = model.generate_content(content)
             return response.text
             
@@ -87,24 +91,17 @@ def get_recipe(images):
         return f"Error: {e}"
 
 # --- 6. APP LAYOUT ---
-
-# Initialize Session State
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
-# A. LOGO SECTION (HTML INJECTION)
+# A. LOGO SECTION
 logo_path = None
-if os.path.exists("logo.png"):
-    logo_path = "logo.png"
-elif os.path.exists("Logo.png"):
-    logo_path = "Logo.png"
-elif os.path.exists("logo.PNG"):
-    logo_path = "logo.PNG"
+if os.path.exists("logo.png"): logo_path = "logo.png"
+elif os.path.exists("Logo.png"): logo_path = "Logo.png"
+elif os.path.exists("logo.PNG"): logo_path = "logo.PNG"
 
 if logo_path:
     img_base64 = get_base64_image(logo_path)
-    # INCREASED SIZE to 500px
-    # Added max-width: 90vw to ensure it fits on phone screens
     st.markdown(
         f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 500px; max-width: 90vw;">',
         unsafe_allow_html=True,
@@ -112,32 +109,25 @@ if logo_path:
 else:
     st.markdown("<h1 style='text-align: center;'>ChefLens</h1>", unsafe_allow_html=True)
 
-# Subtitle
-# CHANGED MARGIN to -20px to pull it up
 st.markdown("""
     <p style='text-align: center; margin-top: -20px; font-size: 16px; opacity: 0.8;'>
-        Visual Intelligence for Your Kitchen, Powered by Google Gemini
+        Visual Intelligence for Your Kitchen
     </p>
 """, unsafe_allow_html=True)
 
-# Spacer
 st.write("")
 st.write("")
 
 # B. INPUT AREA
-# Custom Header
-st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients and we will generate a recipe </h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
 
-# Camera Input
 col1, col2, col3 = st.columns([1, 10, 1])
 with col2:
     camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
-    
     if camera_photo:
         img = Image.open(camera_photo)
         st.session_state.ingredient_images.append(img)
 
-    # C. PHOTO GALLERY
     if len(st.session_state.ingredient_images) > 0:
         st.write("---")
         st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
@@ -151,21 +141,30 @@ with col2:
             st.session_state.ingredient_images = []
             st.rerun()
 
-    # D. ACTION BUTTON
     st.write("") 
     if len(st.session_state.ingredient_images) > 0:
+        
+        # --- NEW: VIBE SELECTOR ---
+        # We put this in a centered container just above the button
+        cooking_style = st.selectbox(
+            "What's the vibe today?", 
+            ["🥗 Healthy & Clean", "👨‍🍳 Standard / Modern", "👧 For the Kids", "🍔 Let Myself Go"],
+            index=1
+        )
+        st.write("") # tiny spacer
+        
         if st.button("Generate Recipe", use_container_width=True):
             if 'recipe_result' in st.session_state:
                 del st.session_state['recipe_result']
             
-            result = get_recipe(st.session_state.ingredient_images)
+            # Pass the style to the function
+            result = get_recipe(st.session_state.ingredient_images, cooking_style)
             st.session_state.recipe_result = result
             st.rerun()
 
 # --- 7. RESULTS DISPLAY ---
 if 'recipe_result' in st.session_state and st.session_state.recipe_result:
     st.markdown("---")
-    
     if "Error" in st.session_state.recipe_result:
         st.error(st.session_state.recipe_result)
     else:

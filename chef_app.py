@@ -28,11 +28,11 @@ st.markdown("""
         h1, h3 { text-align: center !important; }
         p { 
             text-align: center !important; 
-            line-height: 1.6 !important; /* Makes text breathe */
+            line-height: 1.6 !important; 
         }
         .block-container { padding-top: 1rem; padding-bottom: 0rem; }
         
-        /* 2. BUTTON STYLING (The "Pill") */
+        /* 2. BUTTON STYLING */
         div.stButton > button {
             border-radius: 50px;
             padding: 14px 32px;
@@ -63,7 +63,6 @@ st.markdown("""
         footer {visibility: hidden;} 
         header {visibility: hidden;}
         
-        /* 5. CUSTOM SELECTBOX STYLING (Center the text inside the box) */
         div[data-baseweb="select"] > div {
             text-align: center;
         }
@@ -145,7 +144,7 @@ camera_placeholder = st.empty()
 
 # --- STATE 1: START SCREEN ---
 if not st.session_state.camera_open:
-    # Disclaimer Text - Cleaned up alignment and spacing
+    # Disclaimer Text
     st.markdown("""
         <p style='text-align: center; color: #666; font-size: 18px; max-width: 85%; margin: 0 auto; line-height: 1.6;'>
             Snap a photo of your fridge, pantry, or leftovers.<br>
@@ -153,7 +152,6 @@ if not st.session_state.camera_open:
         </p>
     """, unsafe_allow_html=True)
     
-    # EXTRA SPACE (The gap you asked for)
     st.markdown("<br>", unsafe_allow_html=True)
     
     if st.button("Open Kitchen Camera", type="primary", use_container_width=True):
@@ -177,14 +175,14 @@ else:
             st.write("")
             c1, c2 = st.columns(2)
             with c1:
-                # Mirrored Style (Primary, Full Width)
+                # Add Button
                 if st.button("✅ Add to Basket", type="primary", use_container_width=True):
                     img = Image.open(camera_photo)
                     st.session_state.ingredient_images.append(img)
                     st.session_state.camera_key += 1
                     st.rerun()
             with c2:
-                # Secondary Style
+                # Redo Button
                 if st.button("🔄 Redo Photo", use_container_width=True):
                     st.session_state.camera_key += 1
                     st.rerun()
@@ -193,6 +191,7 @@ else:
 if len(st.session_state.ingredient_images) > 0:
     st.write("")
     
+    # Check if 'container' is supported (it usually is)
     with st.container(border=True):
         st.markdown(f"<p style='text-align: center; margin-bottom: 10px;'><b>🛒 Your Basket ({len(st.session_state.ingredient_images)} items)</b></p>", unsafe_allow_html=True)
         
@@ -205,4 +204,45 @@ if len(st.session_state.ingredient_images) > 0:
         
         # EDIT CONTROLS
         c1, c2 = st.columns(2)
-        with
+        with c1:
+            if st.button("↩️ Undo Last", use_container_width=True):
+                if st.session_state.ingredient_images:
+                    st.session_state.ingredient_images.pop()
+                    st.session_state.camera_key += 1
+                    st.rerun()
+        with c2:
+            if st.button("🗑️ Clear All", use_container_width=True):
+                st.session_state.ingredient_images = []
+                st.session_state.camera_key += 1
+                st.rerun()
+
+    st.write("")
+    
+    # --- VIBE SELECTOR ---
+    st.markdown("<h3 style='text-align: center; font-size: 20px; margin-bottom: 5px;'>What's the vibe today?</h3>", unsafe_allow_html=True)
+    
+    cooking_style = st.selectbox(
+        "Vibe",
+        ["🥗 Healthy & Clean", "👨‍🍳 Standard / Modern", "👧 For the Kids", "🍔 Let Myself Go"],
+        index=1,
+        label_visibility="collapsed"
+    )
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    if st.button("Generate Recipe", type="primary", use_container_width=True):
+        if 'recipe_result' in st.session_state:
+            del st.session_state['recipe_result']
+        
+        result = get_recipe(st.session_state.ingredient_images, cooking_style)
+        st.session_state.recipe_result = result
+        st.rerun()
+
+# --- 7. RESULTS DISPLAY ---
+if 'recipe_result' in st.session_state and st.session_state.recipe_result:
+    st.markdown("---")
+    if "Error" in st.session_state.recipe_result:
+        st.error(st.session_state.recipe_result)
+    else:
+        st.subheader("👨‍🍳 Result")
+        st.markdown(st.session_state.recipe_result)

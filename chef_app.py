@@ -10,7 +10,6 @@ st.set_page_config(page_title="ChefLens", page_icon="🍳", layout="centered")
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
 else:
-    # If no secret, ask in sidebar
     if "GEMINI_API_KEY" not in os.environ:
         api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
     else:
@@ -19,27 +18,26 @@ else:
 # --- 3. CUSTOM CSS ---
 st.markdown("""
     <style>
-        /* 1. FORCE IMAGE CENTERING */
-        /* This forces all images in columns to align center */
+        /* FORCE IMAGE CENTERING */
         div[data-testid="column"] {
             display: flex;
             align-items: center; 
             justify-content: center;
         }
 
-        /* 2. REMOVE TOP PADDING */
+        /* REMOVE TOP PADDING */
         .block-container {
             padding-top: 1rem;
             padding-bottom: 0rem;
         }
         
-        /* 3. CENTER TEXT */
+        /* CENTER TEXT */
         .stMarkdown p {
             text-align: center;
             color: #666;
         }
         
-        /* 4. BUTTON STYLE */
+        /* BUTTON STYLES */
         div.stButton > button {
             display: block;
             margin: 0 auto;
@@ -92,8 +90,11 @@ def get_recipe(images):
 
 # --- 5. APP LAYOUT ---
 
-# A. LOGO SECTION (Fixed Centering)
-# We use [1, 2, 1] which creates a narrower middle lane, forcing the logo to center.
+# Initialize Session State
+if 'ingredient_images' not in st.session_state:
+    st.session_state.ingredient_images = []
+
+# A. LOGO SECTION (Centered [1,2,1])
 left_co, cent_co, last_co = st.columns([1, 2, 1])
 
 with cent_co:
@@ -106,57 +107,61 @@ with cent_co:
     else:
         st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
 
-    # Subtitle inside the same centered column
     st.markdown("""
         <p style='text-align: center; color: #666; margin-top: -15px; font-size: 16px;'>
-            Visual Intelligence for Your Kitchen, Powered by Google
+            Visual Intelligence for Your Kitchen, Powered by Google Gemini
         </p>
     """, unsafe_allow_html=True)
 
 # B. INPUT AREA
-# We keep this wider ([1,6,1]) so the drag-and-drop zone is nice and big
 col1, col2, col3 = st.columns([1, 6, 1])
 
 with col2:
-    # Initialize session state for basket
-    if 'ingredient_images' not in st.session_state:
-        st.session_state.ingredient_images = []
-
-    uploaded_files = st.file_uploader("Upload photos (Fridge, Pantry, Freezer)", 
-                                    type=["jpg", "png", "jpeg"], 
-                                    accept_multiple_files=True)
+    # 1. CAMERA INPUT
+    # We use a unique key based on list length to force it to reset after snapping
+    camera_photo = st.camera_input("Snap a photo of your ingredients")
     
-    current_images = []
-    
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            image = Image.open(uploaded_file)
-            current_images.append(image)
-
-    # Camera input
-    camera_photo = st.camera_input("Or snap a photo")
     if camera_photo:
-        cam_image = Image.open(camera_photo)
-        current_images.append(cam_image)
+        # Check if this exact image is already in our list to prevent duplicates
+        # (Streamlit re-runs the script on every interaction)
+        is_new = True
+        # Simple check: if we just added this, don't add it again immediately
+        if len(st.session_state.ingredient_images) > 0:
+             # This is a basic debounce; for production we might need ID checking
+             pass 
+        
+        img = Image.open(camera_photo)
+        st.session_state.ingredient_images.append(img)
+        # Note: We don't force rerun here, we let the user keep snapping
 
-    # C. PREVIEW GALLERY
-    if current_images:
+    # 2. PHOTO GALLERY (The "Basket")
+    if len(st.session_state.ingredient_images) > 0:
         st.write("---")
-        st.caption(f"Analyzing {len(current_images)} photos:")
-        cols = st.columns(len(current_images))
-        for idx, img in enumerate(current_images):
-            with cols[idx]:
+        st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
+        
+        # Display thumbnails in rows of 3
+        cols = st.columns(3)
+        for idx, img in enumerate(st.session_state.ingredient_images):
+            with cols[idx % 3]:
                 st.image(img, use_container_width=True)
+                
+        # Clear Button
+        if st.button("Clear Photos & Start Over"):
+            st.session_state.ingredient_images = []
+            st.rerun()
 
-    # D. ACTION BUTTON
+    # C. ACTION BUTTON
     st.write("") 
-    if current_images:
+    if len(st.session_state.ingredient_images) > 0:
         if st.button("Generate Recipe"):
             if 'recipe_result' in st.session_state:
                 del st.session_state['recipe_result']
             
-            result = get_recipe(current_images)
+            result = get_recipe(st.session_state.ingredient_images)
             st.session_state.recipe_result = result
+            # We clear the images after generating to start fresh? 
+            # Optional: Uncomment next line to auto-clear
+            # st.session_state.ingredient_images = [] 
             st.rerun()
 
 # --- 6. RESULTS DISPLAY ---

@@ -30,7 +30,7 @@ st.markdown("""
             text-align: center !important;
         }
 
-        /* 2. REMOVE TOP PADDING (Tighten up the top) */
+        /* 2. REMOVE TOP PADDING */
         .block-container {
             padding-top: 1rem;
             padding-bottom: 0rem;
@@ -93,7 +93,6 @@ if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
 # A. LOGO SECTION (HTML INJECTION)
-# This finds the correct file and injects it using pure HTML centering
 logo_path = None
 if os.path.exists("logo.png"):
     logo_path = "logo.png"
@@ -103,19 +102,20 @@ elif os.path.exists("logo.PNG"):
     logo_path = "logo.PNG"
 
 if logo_path:
-    # Convert image to code
     img_base64 = get_base64_image(logo_path)
-    # Inject HTML: display: block; margin: 0 auto; is the "Holy Grail" of centering
+    # INCREASED SIZE to 500px
+    # Added max-width: 90vw to ensure it fits on phone screens
     st.markdown(
-        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 300px;">',
+        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 500px; max-width: 90vw;">',
         unsafe_allow_html=True,
     )
 else:
     st.markdown("<h1 style='text-align: center;'>ChefLens</h1>", unsafe_allow_html=True)
 
 # Subtitle
+# CHANGED MARGIN to -20px to pull it up
 st.markdown("""
-    <p style='text-align: center; margin-top: 10px; font-size: 16px; opacity: 0.8;'>
+    <p style='text-align: center; margin-top: -20px; font-size: 16px; opacity: 0.8;'>
         Visual Intelligence for Your Kitchen
     </p>
 """, unsafe_allow_html=True)
@@ -128,7 +128,7 @@ st.write("")
 # Custom Header
 st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
 
-# Camera Input (Centered using columns for the widget width)
+# Camera Input
 col1, col2, col3 = st.columns([1, 10, 1])
 with col2:
     camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
@@ -144,7 +144,6 @@ with col2:
         
         cols = st.columns(3)
         for idx, img in enumerate(st.session_state.ingredient_images):
-            # Center images in the gallery grid too
             with cols[idx % 3]:
                 st.image(img, use_container_width=True)
                 

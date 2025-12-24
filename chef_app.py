@@ -109,7 +109,7 @@ with cent_co:
     # Subtitle inside the same centered column
     st.markdown("""
         <p style='text-align: center; color: #666; margin-top: -15px; font-size: 16px;'>
-            Visual Intelligence for Your Kitchen
+            Visual Intelligence for Your Kitchen, Powered by Google
         </p>
     """, unsafe_allow_html=True)
 

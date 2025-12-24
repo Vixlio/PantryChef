@@ -69,7 +69,7 @@ st.markdown("""
             border: none !important;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
             transition: all 0.3s ease !important;
-            text-transform: none !important; /* Prevents ALL CAPS if set by browser */
+            text-transform: none !important;
         }
         div[data-testid="stCameraInput"] button:hover {
             background-color: #6A1B9A !important;
@@ -183,11 +183,12 @@ else:
     
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
-        # Camera Widget
+        # Camera Widget (Added help text for flipping camera)
         camera_photo = st.camera_input(
             label="Snap Photo", 
             label_visibility="hidden", 
-            key=f"camera_{st.session_state.camera_key}"
+            key=f"camera_{st.session_state.camera_key}",
+            help="If the camera is facing the wrong way, please tap the switch camera icon."
         )
         
         # --- REVIEW LOGIC ---
@@ -195,8 +196,8 @@ else:
             st.write("")
             c1, c2 = st.columns(2)
             with c1:
-                # Add Button
-                if st.button("✅ Add to Basket", type="primary", use_container_width=True):
+                # Add Button (Removed type="primary" to make it gray/white)
+                if st.button("✅ Add to Basket", use_container_width=True):
                     img = Image.open(camera_photo)
                     st.session_state.ingredient_images.append(img)
                     st.session_state.camera_key += 1
@@ -249,6 +250,7 @@ if len(st.session_state.ingredient_images) > 0:
     
     st.markdown("<br>", unsafe_allow_html=True)
     
+    # Generate Button (Stays Primary/Purple)
     if st.button("Generate Recipe", type="primary", use_container_width=True):
         if 'recipe_result' in st.session_state:
             del st.session_state['recipe_result']

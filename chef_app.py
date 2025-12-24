@@ -116,7 +116,7 @@ else:
 # CHANGED MARGIN to -20px to pull it up
 st.markdown("""
     <p style='text-align: center; margin-top: -20px; font-size: 16px; opacity: 0.8;'>
-        Visual Intelligence for Your Kitchen
+        Visual Intelligence for Your Kitchen, Powered by Google Gemini
     </p>
 """, unsafe_allow_html=True)
 
@@ -126,7 +126,7 @@ st.write("")
 
 # B. INPUT AREA
 # Custom Header
-st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients and we will generate a recipe </h3>", unsafe_allow_html=True)
 
 # Camera Input
 col1, col2, col3 = st.columns([1, 10, 1])

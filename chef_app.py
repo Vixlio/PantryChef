@@ -11,22 +11,6 @@ if "GEMINI_API_KEY" in st.secrets:
 else:
     api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
-# --- SIDEBAR: MODEL DIAGNOSTIC ---
-# This section will tell us the CORRECT name to use
-with st.sidebar:
-    st.header("🔧 Diagnostics")
-    if api_key:
-        genai.configure(api_key=api_key)
-        if st.button("List My Available Models"):
-            try:
-                st.write("Checking...")
-                for m in genai.list_models():
-                    # Only show models that can see (vision) or write text
-                    if 'generateContent' in m.supported_generation_methods:
-                        st.code(m.name)
-            except Exception as e:
-                st.error(e)
-
 # --- THE BRAIN ---
 def get_recipe(image_input):
     if not api_key:
@@ -35,28 +19,32 @@ def get_recipe(image_input):
     try:
         genai.configure(api_key=api_key)
         
-        # --- IMPORTANT: CHANGE THIS NAME BASED ON THE SIDEBAR LIST ---
-        # Try 'models/gemini-1.5-flash-latest' if standard flash fails
-        model = genai.GenerativeModel('gemini-1.5-flash-latest') 
+        # WE FOUND THE CORRECT NAME!
+        model = genai.GenerativeModel('gemini-2.0-flash') 
         
         prompt = """
         You are a creative chef. Look at this image of ingredients.
         1. Identify what ingredients are visible.
         2. Suggest a creative, delicious recipe using MAINLY these items.
+        3. Assume user has basic staples (salt, oil, flour, water).
         """
         
-        response = model.generate_content([prompt, image_input])
-        return response.text
+        with st.spinner("👨‍🍳 Chef is analyzing..."):
+            response = model.generate_content([prompt, image_input])
+            return response.text
+            
     except Exception as e:
         return f"Error: {e}"
 
 # --- APP INTERFACE ---
 st.title("📸 Iron Chef Vision")
+st.write("Snap a photo of your fridge to get a recipe.")
 
-# Session State
+# Session State (The "Backpack" to prevent API spam)
 if 'recipe_result' not in st.session_state:
     st.session_state.recipe_result = None
 
+# Tabs
 tab1, tab2 = st.tabs(["📸 Camera", "📂 Upload"])
 image_to_process = None
 
@@ -70,13 +58,16 @@ with tab2:
     if uploaded_file:
         image_to_process = Image.open(uploaded_file)
 
+# --- THE COOKING ACTION ---
 if image_to_process:
     st.image(image_to_process, caption="Ingredients Detected", width=300)
-    if st.button("👨‍🍳 Cook Something!"):
-        with st.spinner("Analyzing..."):
-            result = get_recipe(image_to_process)
-            st.session_state.recipe_result = result
 
+    # The Button (Only runs when clicked!)
+    if st.button("👨‍🍳 Cook Something!"):
+        result = get_recipe(image_to_process)
+        st.session_state.recipe_result = result
+
+    # Display Result from Memory
     if st.session_state.recipe_result:
         if "Error" in st.session_state.recipe_result:
             st.error(st.session_state.recipe_result)

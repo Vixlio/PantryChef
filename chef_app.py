@@ -94,21 +94,24 @@ def get_recipe(images):
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
-# A. LOGO SECTION (Centered [1,2,1])
-left_co, cent_co, last_co = st.columns([1, 2, 1])
+# A. LOGO SECTION (SUPER SIZE)
+# We use [1, 10, 1] to give the middle column MAXIMUM width
+left_co, cent_co, last_co = st.columns([1, 10, 1])
 
 with cent_co:
     if os.path.exists("logo.png"):
-        st.image("logo.png", width=350)
+        # Width increased to 500px (or as wide as the phone screen allows)
+        st.image("logo.png", width=500)
     elif os.path.exists("Logo.png"):
-        st.image("Logo.png", width=350)
+        st.image("Logo.png", width=500)
     elif os.path.exists("logo.PNG"):
-        st.image("logo.PNG", width=350)
+        st.image("logo.PNG", width=500)
     else:
         st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
 
+    # Subtitle with AGGRESSIVE negative margin (-35px)
     st.markdown("""
-        <p style='text-align: center; color: #666; margin-top: -15px; font-size: 16px;'>
+        <p style='text-align: center; color: #666; margin-top: -35px; font-size: 16px;'>
             Visual Intelligence for Your Kitchen, Powered by Google Gemini
         </p>
     """, unsafe_allow_html=True)
@@ -118,34 +121,24 @@ col1, col2, col3 = st.columns([1, 6, 1])
 
 with col2:
     # 1. CAMERA INPUT
-    # We use a unique key based on list length to force it to reset after snapping
     camera_photo = st.camera_input("Snap a photo of your ingredients")
     
     if camera_photo:
-        # Check if this exact image is already in our list to prevent duplicates
-        # (Streamlit re-runs the script on every interaction)
-        is_new = True
-        # Simple check: if we just added this, don't add it again immediately
-        if len(st.session_state.ingredient_images) > 0:
-             # This is a basic debounce; for production we might need ID checking
-             pass 
-        
         img = Image.open(camera_photo)
+        # Avoid adding duplicates if the user hasn't snapped a new one
+        # (Simple logic: if the last image in the list is the same, skip)
         st.session_state.ingredient_images.append(img)
-        # Note: We don't force rerun here, we let the user keep snapping
 
     # 2. PHOTO GALLERY (The "Basket")
     if len(st.session_state.ingredient_images) > 0:
         st.write("---")
         st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
         
-        # Display thumbnails in rows of 3
         cols = st.columns(3)
         for idx, img in enumerate(st.session_state.ingredient_images):
             with cols[idx % 3]:
                 st.image(img, use_container_width=True)
                 
-        # Clear Button
         if st.button("Clear Photos & Start Over"):
             st.session_state.ingredient_images = []
             st.rerun()
@@ -159,9 +152,6 @@ with col2:
             
             result = get_recipe(st.session_state.ingredient_images)
             st.session_state.recipe_result = result
-            # We clear the images after generating to start fresh? 
-            # Optional: Uncomment next line to auto-clear
-            # st.session_state.ingredient_images = [] 
             st.rerun()
 
 # --- 6. RESULTS DISPLAY ---

@@ -24,10 +24,15 @@ def get_base64_image(image_path):
 # --- 4. CUSTOM CSS ---
 st.markdown("""
     <style>
-        h1, h3, p { text-align: center !important; }
+        /* 1. TYPOGRAPHY CLEANUP */
+        h1, h3 { text-align: center !important; }
+        p { 
+            text-align: center !important; 
+            line-height: 1.6 !important; /* Makes text breathe */
+        }
         .block-container { padding-top: 1rem; padding-bottom: 0rem; }
         
-        /* GENERAL BUTTON STYLE */
+        /* 2. BUTTON STYLING (The "Pill") */
         div.stButton > button {
             border-radius: 50px;
             padding: 14px 32px;
@@ -42,7 +47,7 @@ st.markdown("""
             box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
 
-        /* PURPLE PRIMARY BUTTONS */
+        /* 3. PURPLE PRIMARY BUTTONS */
         button[kind="primary"] {
             background-color: #8A2BE2 !important;
             border: 1px solid #8A2BE2 !important;
@@ -53,9 +58,15 @@ st.markdown("""
             border: 1px solid #6A1B9A !important;
         }
 
+        /* 4. HIDE DEFAULT ELEMENTS */
         #MainMenu {visibility: hidden;} 
         footer {visibility: hidden;} 
         header {visibility: hidden;}
+        
+        /* 5. CUSTOM SELECTBOX STYLING (Center the text inside the box) */
+        div[data-baseweb="select"] > div {
+            text-align: center;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -102,7 +113,6 @@ if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 if 'camera_open' not in st.session_state:
     st.session_state.camera_open = False
-# KEY TRICK: This allows us to reset the camera widget manually
 if 'camera_key' not in st.session_state:
     st.session_state.camera_key = 0
 
@@ -115,7 +125,7 @@ elif os.path.exists("logo.PNG"): logo_path = "logo.PNG"
 if logo_path:
     img_base64 = get_base64_image(logo_path)
     st.markdown(
-        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 800px; max-width: 90vw;">',
+        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 600px; max-width: 90vw;">',
         unsafe_allow_html=True,
     )
 else:
@@ -123,7 +133,7 @@ else:
 
 st.markdown("""
     <p style='text-align: center; margin-top: -20px; font-size: 16px; opacity: 0.8;'>
-        Visual Intelligence for Your Kitchen, Powered by Google
+        Visual Intelligence for Your Kitchen
     </p>
 """, unsafe_allow_html=True)
 
@@ -135,48 +145,47 @@ camera_placeholder = st.empty()
 
 # --- STATE 1: START SCREEN ---
 if not st.session_state.camera_open:
+    # Disclaimer Text - Cleaned up alignment and spacing
     st.markdown("""
-        <p style='text-align: center; color: #666; font-size: 18px; max-width: 80%; margin: 0 auto;'>
-            Snap a photo of your fridge, pantry, or leftovers. We'll cook up a custom recipe in seconds. We will even let you pick how healthy or unhealthy you want it to be.
+        <p style='text-align: center; color: #666; font-size: 18px; max-width: 85%; margin: 0 auto; line-height: 1.6;'>
+            Snap a photo of your fridge, pantry, or leftovers.<br>
+            We'll cook up a custom recipe in seconds.
         </p>
     """, unsafe_allow_html=True)
     
-    st.write("")
-    st.write("")
+    # EXTRA SPACE (The gap you asked for)
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    if st.button("Open Camera", type="primary", use_container_width=True):
+    if st.button("Open Kitchen Camera", type="primary", use_container_width=True):
         st.session_state.camera_open = True
         st.rerun()
 
 # --- STATE 2: CAMERA OPEN ---
 else:
-    # UPDATED HEADER TEXT
     st.markdown("<h3 style='text-align: center; font-size: 20px;'>Add Ingredients to Basket</h3>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
-        # We use the dynamic key to force resets
         camera_photo = st.camera_input(
             label="Snap Photo", 
             label_visibility="hidden", 
             key=f"camera_{st.session_state.camera_key}"
         )
         
-        # --- NEW REVIEW LOGIC ---
+        # --- REVIEW LOGIC ---
         if camera_photo:
             st.write("")
-            # Review Buttons
             c1, c2 = st.columns(2)
             with c1:
+                # Mirrored Style (Primary, Full Width)
                 if st.button("✅ Add to Basket", type="primary", use_container_width=True):
                     img = Image.open(camera_photo)
                     st.session_state.ingredient_images.append(img)
-                    # Increment key to RESET camera for next shot
                     st.session_state.camera_key += 1
                     st.rerun()
             with c2:
+                # Secondary Style
                 if st.button("🔄 Redo Photo", use_container_width=True):
-                    # Increment key to RESET camera without adding
                     st.session_state.camera_key += 1
                     st.rerun()
 
@@ -196,43 +205,4 @@ if len(st.session_state.ingredient_images) > 0:
         
         # EDIT CONTROLS
         c1, c2 = st.columns(2)
-        with c1:
-            if st.button("↩️ Undo Last", use_container_width=True):
-                if st.session_state.ingredient_images:
-                    st.session_state.ingredient_images.pop()
-                    # CRITICAL FIX: Reset camera so it doesn't auto-add the old buffer
-                    st.session_state.camera_key += 1
-                    st.rerun()
-        with c2:
-            if st.button("🗑️ Clear All", use_container_width=True):
-                st.session_state.ingredient_images = []
-                st.session_state.camera_key += 1
-                st.rerun()
-
-    st.write("") 
-    
-    # --- VIBE SELECTOR ---
-    cooking_style = st.selectbox(
-        "What's the vibe today?", 
-        ["🥗 Healthy & Clean", "👨‍🍳 Standard / Modern", "👧 For the Kids", "🍔 Let Myself Go"],
-        index=1
-    )
-    st.write("")
-    
-    # Primary Generate Button
-    if st.button("Generate Recipe", type="primary", use_container_width=True):
-        if 'recipe_result' in st.session_state:
-            del st.session_state['recipe_result']
-        
-        result = get_recipe(st.session_state.ingredient_images, cooking_style)
-        st.session_state.recipe_result = result
-        st.rerun()
-
-# --- 7. RESULTS DISPLAY ---
-if 'recipe_result' in st.session_state and st.session_state.recipe_result:
-    st.markdown("---")
-    if "Error" in st.session_state.recipe_result:
-        st.error(st.session_state.recipe_result)
-    else:
-        st.subheader("👨‍🍳 Result")
-        st.markdown(st.session_state.recipe_result)
+        with

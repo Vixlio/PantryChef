@@ -2,6 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 import os
+import base64
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="ChefLens", page_icon="🍳", layout="centered")
@@ -15,31 +16,27 @@ else:
     else:
         api_key = os.environ["GEMINI_API_KEY"]
 
-# --- 3. CUSTOM CSS ---
+# --- 3. HELPER FUNCTIONS ---
+def get_base64_image(image_path):
+    """Converts an image file to a base64 string so we can use HTML styling on it."""
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+# --- 4. CUSTOM CSS ---
 st.markdown("""
     <style>
-        /* 1. FORCE LOGO & IMAGES TO CENTER (MOBILE & DESKTOP) */
-        /* This Flexbox rule creates a strong magnetic pull to the center */
-        div[data-testid="stImage"] {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-        }
-        
-        /* 2. CENTER ALL TEXT HEADERS */
-        /* We do not specify color, so it adapts to Light/Dark mode automatically */
+        /* 1. CENTER ALL TEXT HEADERS */
         h1, h3, p {
             text-align: center !important;
         }
 
-        /* 3. REMOVE TOP PADDING */
+        /* 2. REMOVE TOP PADDING (Tighten up the top) */
         .block-container {
-            padding-top: 2rem;
+            padding-top: 1rem;
             padding-bottom: 0rem;
         }
         
-        /* 4. BUTTON STYLES */
+        /* 3. BUTTON STYLES */
         div.stButton > button {
             display: block;
             margin: 0 auto;
@@ -64,7 +61,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. THE BRAIN ---
+# --- 5. THE BRAIN ---
 def get_recipe(images):
     if not api_key:
         return "🚨 Error: No API Key provided."
@@ -89,27 +86,36 @@ def get_recipe(images):
     except Exception as e:
         return f"Error: {e}"
 
-# --- 5. APP LAYOUT ---
+# --- 6. APP LAYOUT ---
 
 # Initialize Session State
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
-# A. LOGO SECTION (No Columns - Pure CSS Centering)
+# A. LOGO SECTION (HTML INJECTION)
+# This finds the correct file and injects it using pure HTML centering
+logo_path = None
 if os.path.exists("logo.png"):
-    # We use 300px which is safe for mobile screens
-    st.image("logo.png", width=300) 
+    logo_path = "logo.png"
 elif os.path.exists("Logo.png"):
-    st.image("Logo.png", width=300)
+    logo_path = "Logo.png"
 elif os.path.exists("logo.PNG"):
-    st.image("logo.PNG", width=300)
+    logo_path = "logo.PNG"
+
+if logo_path:
+    # Convert image to code
+    img_base64 = get_base64_image(logo_path)
+    # Inject HTML: display: block; margin: 0 auto; is the "Holy Grail" of centering
+    st.markdown(
+        f'<img src="data:image/png;base64,{img_base64}" style="display: block; margin-left: auto; margin-right: auto; width: 300px;">',
+        unsafe_allow_html=True,
+    )
 else:
-    # Fallback text if no logo
     st.markdown("<h1 style='text-align: center;'>ChefLens</h1>", unsafe_allow_html=True)
 
-# Subtitle (No hardcoded color - adapts to theme)
+# Subtitle
 st.markdown("""
-    <p style='text-align: center; margin-top: -10px; font-size: 16px; opacity: 0.8;'>
+    <p style='text-align: center; margin-top: 10px; font-size: 16px; opacity: 0.8;'>
         Visual Intelligence for Your Kitchen
     </p>
 """, unsafe_allow_html=True)
@@ -119,11 +125,10 @@ st.write("")
 st.write("")
 
 # B. INPUT AREA
-# 1. Custom Centered Header
+# Custom Header
 st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
 
-# 2. Camera Input
-# We use columns ONLY here to control the width of the camera viewport
+# Camera Input (Centered using columns for the widget width)
 col1, col2, col3 = st.columns([1, 10, 1])
 with col2:
     camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
@@ -131,21 +136,18 @@ with col2:
     if camera_photo:
         img = Image.open(camera_photo)
         st.session_state.ingredient_images.append(img)
-        # We don't rerun immediately so you can keep snapping
 
-    # C. PHOTO GALLERY (The "Basket")
+    # C. PHOTO GALLERY
     if len(st.session_state.ingredient_images) > 0:
         st.write("---")
-        # Dynamic text that adapts to theme
         st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
         
-        # Display thumbnails
         cols = st.columns(3)
         for idx, img in enumerate(st.session_state.ingredient_images):
+            # Center images in the gallery grid too
             with cols[idx % 3]:
                 st.image(img, use_container_width=True)
                 
-        # Clear Button
         if st.button("Clear Photos & Start Over"):
             st.session_state.ingredient_images = []
             st.rerun()
@@ -161,7 +163,7 @@ with col2:
             st.session_state.recipe_result = result
             st.rerun()
 
-# --- 6. RESULTS DISPLAY ---
+# --- 7. RESULTS DISPLAY ---
 if 'recipe_result' in st.session_state and st.session_state.recipe_result:
     st.markdown("---")
     

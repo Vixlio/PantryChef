@@ -11,23 +11,13 @@ if "GEMINI_API_KEY" in st.secrets:
 else:
     api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
-# --- CUSTOM CSS (The "Google" Look) ---
+# --- CUSTOM CSS (Google Style Buttons & Centering) ---
 st.markdown("""
     <style>
-        /* Center the Main Title */
-        h1 {
-            text-align: center;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-weight: 700;
-            color: #333;
-            margin-top: -50px;
-        }
-        
-        /* Center the Subtext */
+        /* Center text generally */
         .stMarkdown p {
             text-align: center;
             color: #666;
-            font-size: 18px;
         }
 
         /* Style the "Cook" Button to look like "Google Search" */
@@ -40,6 +30,7 @@ st.markdown("""
             border-radius: 4px;
             padding: 10px 24px;
             font-size: 14px;
+            font-weight: 500;
             transition: all 0.3s;
         }
         div.stButton > button:hover {
@@ -49,7 +40,7 @@ st.markdown("""
             color: #202124;
         }
         
-        /* Hide the default Streamlit footer/menu for cleanliness */
+        /* Hide footer */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
     </style>
@@ -81,16 +72,19 @@ def get_recipe(image_input):
 
 # --- APP LAYOUT ---
 
-# 1. The Header (Big & Centered)
-st.title("ChefLens")
-st.markdown("Visual Intelligence for Your Fridge")
+# 1. THE NEW LOGO HEADER
+# We use HTML to create a styled logo instead of plain text
+st.markdown("""
+    <div style='text-align: center; margin-bottom: 30px;'>
+        <span style='font-size: 60px;'>👨‍🍳</span>
+        <span style='font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700; font-size: 50px; color: #333; margin: 0 10px;'>ChefLens</span>
+        <span style='font-size: 60px;'>📷</span>
+        <br>
+        <span style='font-size: 18px; color: #666;'>Visual Intelligence for Your Fridge</span>
+    </div>
+""", unsafe_allow_html=True)
 
-# 2. Spacing buffer
-st.write("") 
-st.write("")
-
-# 3. The Input Area (Centered Column)
-# We use columns to make the input area narrower, like a search bar
+# 2. The Input Area (Centered Column)
 col1, col2, col3 = st.columns([1, 6, 1])
 
 with col2:
@@ -109,7 +103,7 @@ with col2:
         if uploaded_file:
             image_to_process = Image.open(uploaded_file)
 
-    # 4. The Action Button (Centered by CSS above)
+    # 4. The Action Button
     st.write("") # Spacer
     if image_to_process:
         if st.button("Generate Recipe"):
@@ -122,7 +116,6 @@ with col2:
             st.rerun()
 
 # --- RESULTS SECTION ---
-# This appears below the "search bar" area
 if 'recipe_result' in st.session_state and st.session_state.recipe_result:
     st.markdown("---") # A subtle divider
     

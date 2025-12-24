@@ -74,7 +74,7 @@ with cent_co:
     # TRY to load the logo. If it fails, show text instead.
     try:
         # Make sure your file on GitHub is named EXACTLY "logo.png" (case sensitive!)
-        st.image("logo.png", width=350) 
+        st.image("logo.png", width=400) 
     except:
         st.error("Logo not found. Upload 'logo.png' to GitHub!")
 

@@ -18,7 +18,7 @@ def get_recipe(image_input):
     
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash') 
+        model = genai.GenerativeModel('gemini-2.0-flash') 
         
         prompt = """
         You are a creative chef. Look at this image of ingredients.

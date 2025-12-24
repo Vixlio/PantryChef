@@ -55,6 +55,7 @@ def get_recipe(image_input):
     
     try:
         genai.configure(api_key=api_key)
+        # Using the "Lite" model (10 requests/min limit)
         model = genai.GenerativeModel('gemini-2.5-flash-lite') 
         
         prompt = """
@@ -87,48 +88,6 @@ with cent_co:
         st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
         st.error("⚠️ Tip: Upload 'logo.png' to GitHub!")
 
-    # B. SUBTITLE (Now INSIDE the column with aggressive negative margin)
+    # B. SUBTITLE (Updated Text & Centered)
     st.markdown("""
-        <p style='text-align: center; color: #666; margin-top: -25px; font-size: 16px;'>
-            Visual Intelligence for Your Fridge
-        </p>
-    """, unsafe_allow_html=True)
-
-# C. INPUT AREA
-col1, col2, col3 = st.columns([1, 6, 1])
-
-with col2:
-    tab_cam, tab_up = st.tabs(["📸 Camera", "📂 Upload"])
-    
-    image_to_process = None
-    
-    with tab_cam:
-        camera_photo = st.camera_input("Snap a photo")
-        if camera_photo:
-            image_to_process = Image.open(camera_photo)
-            
-    with tab_up:
-        uploaded_file = st.file_uploader("Choose a file", type=["jpg", "png", "jpeg"])
-        if uploaded_file:
-            image_to_process = Image.open(uploaded_file)
-
-    # D. ACTION BUTTON
-    st.write("") 
-    if image_to_process:
-        if st.button("Generate Recipe"):
-            if 'recipe_result' in st.session_state:
-                del st.session_state['recipe_result']
-            
-            result = get_recipe(image_to_process)
-            st.session_state.recipe_result = result
-            st.rerun()
-
-# --- 6. RESULTS DISPLAY ---
-if 'recipe_result' in st.session_state and st.session_state.recipe_result:
-    st.markdown("---")
-    
-    if "Error" in st.session_state.recipe_result:
-        st.error(st.session_state.recipe_result)
-    else:
-        st.subheader("👨‍🍳 Result")
-        st.markdown(st.session_state.recipe_result)
+        <p style='text-align: center; color:

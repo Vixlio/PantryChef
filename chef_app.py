@@ -10,19 +10,36 @@ st.set_page_config(page_title="ChefLens", page_icon="🍳", layout="centered")
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
 else:
-    api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
+    # If no secret, ask in sidebar
+    if "GEMINI_API_KEY" not in os.environ:
+        api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
+    else:
+        api_key = os.environ["GEMINI_API_KEY"]
 
 # --- 3. CUSTOM CSS ---
 st.markdown("""
     <style>
+        /* 1. FORCE IMAGE CENTERING */
+        /* This forces all images in columns to align center */
+        div[data-testid="column"] {
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+        }
+
+        /* 2. REMOVE TOP PADDING */
         .block-container {
             padding-top: 1rem;
             padding-bottom: 0rem;
         }
+        
+        /* 3. CENTER TEXT */
         .stMarkdown p {
             text-align: center;
             color: #666;
         }
+        
+        /* 4. BUTTON STYLE */
         div.stButton > button {
             display: block;
             margin: 0 auto;
@@ -41,6 +58,7 @@ st.markdown("""
             box-shadow: 0 1px 1px rgba(0,0,0,.1);
             color: #202124;
         }
+        
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
@@ -63,7 +81,6 @@ def get_recipe(images):
         3. Format the output cleanly with bold headers.
         """
         
-        # We create a list containing the prompt + ALL images
         content = [prompt] + images
         
         with st.spinner(f"Analyzing {len(images)} photos..."):
@@ -75,12 +92,10 @@ def get_recipe(images):
 
 # --- 5. APP LAYOUT ---
 
-# Initialize Session State for the "Basket" of images
-if 'ingredient_images' not in st.session_state:
-    st.session_state.ingredient_images = []
+# A. LOGO SECTION (Fixed Centering)
+# We use [1, 2, 1] which creates a narrower middle lane, forcing the logo to center.
+left_co, cent_co, last_co = st.columns([1, 2, 1])
 
-# A. HEADER
-left_co, cent_co, last_co = st.columns([1, 4, 1])
 with cent_co:
     if os.path.exists("logo.png"):
         st.image("logo.png", width=350)
@@ -91,22 +106,26 @@ with cent_co:
     else:
         st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
 
+    # Subtitle inside the same centered column
     st.markdown("""
-        <p style='text-align: center; color: #666; margin-top: -25px; font-size: 16px;'>
+        <p style='text-align: center; color: #666; margin-top: -15px; font-size: 16px;'>
             Visual Intelligence for Your Kitchen
         </p>
     """, unsafe_allow_html=True)
 
 # B. INPUT AREA
+# We keep this wider ([1,6,1]) so the drag-and-drop zone is nice and big
 col1, col2, col3 = st.columns([1, 6, 1])
 
 with col2:
-    # 1. FILE UPLOADER (Accepts Multiple)
+    # Initialize session state for basket
+    if 'ingredient_images' not in st.session_state:
+        st.session_state.ingredient_images = []
+
     uploaded_files = st.file_uploader("Upload photos (Fridge, Pantry, Freezer)", 
                                     type=["jpg", "png", "jpeg"], 
                                     accept_multiple_files=True)
     
-    # Logic: If user uploads files, we add them to our list
     current_images = []
     
     if uploaded_files:
@@ -114,20 +133,16 @@ with col2:
             image = Image.open(uploaded_file)
             current_images.append(image)
 
-    # 2. CAMERA (Optional Addition)
-    # Note: Streamlit Camera clears itself on refresh, so mixing cam + upload 
-    # is tricky. For now, we show the camera below the upload.
+    # Camera input
     camera_photo = st.camera_input("Or snap a photo")
     if camera_photo:
         cam_image = Image.open(camera_photo)
         current_images.append(cam_image)
 
     # C. PREVIEW GALLERY
-    # Show small thumbnails of what we are about to cook
     if current_images:
         st.write("---")
         st.caption(f"Analyzing {len(current_images)} photos:")
-        # Display images in a row
         cols = st.columns(len(current_images))
         for idx, img in enumerate(current_images):
             with cols[idx]:
@@ -140,7 +155,6 @@ with col2:
             if 'recipe_result' in st.session_state:
                 del st.session_state['recipe_result']
             
-            # Pass the WHOLE LIST of images to the AI
             result = get_recipe(current_images)
             st.session_state.recipe_result = result
             st.rerun()

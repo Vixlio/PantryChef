@@ -29,7 +29,7 @@ st.markdown("""
         div.stButton > button {
             display: block; margin: 0 auto; background-color: #f8f9fa; 
             color: #3c4043; border: 1px solid #f8f9fa; border-radius: 4px;
-            padding: 10px 24px; font-size: 14px; font-weight: 500; transition: all 0.3s;
+            padding: 10px 24px; font-size: 18px; font-weight: 500; transition: all 0.3s;
         }
         div.stButton > button:hover {
             background-color: #e8eaed; border: 1px solid #dadce0; color: #202124;

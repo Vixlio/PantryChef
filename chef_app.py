@@ -1,23 +1,27 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
+import os
 
-# --- CONFIGURATION ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="ChefLens", page_icon="🍳", layout="centered")
 
-# --- AUTHENTICATION ---
+# --- 2. AUTHENTICATION ---
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
 else:
     api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
-# --- CUSTOM CSS ---
+# --- 3. CUSTOM CSS (Tight & Modern) ---
 st.markdown("""
     <style>
-        .stMarkdown p {
-            text-align: center;
-            color: #666;
+        /* REMOVE DEFAULT TOP PADDING */
+        .block-container {
+            padding-top: 1rem;
+            padding-bottom: 0rem;
         }
+        
+        /* Google-style Button */
         div.stButton > button {
             display: block;
             margin: 0 auto;
@@ -25,9 +29,10 @@ st.markdown("""
             color: #3c4043;
             border: 1px solid #f8f9fa;
             border-radius: 4px;
-            padding: 10px 10px;
+            padding: 10px 24px;
             font-size: 14px;
             font-weight: 500;
+            transition: all 0.3s;
         }
         div.stButton > button:hover {
             background-color: #f8f9fa;
@@ -35,12 +40,15 @@ st.markdown("""
             box-shadow: 0 1px 1px rgba(0,0,0,.1);
             color: #202124;
         }
+        
+        /* Clean up layout */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
+        header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- THE BRAIN ---
+# --- 4. THE BRAIN ---
 def get_recipe(image_input):
     if not api_key:
         return "🚨 Error: No API Key provided."
@@ -63,28 +71,35 @@ def get_recipe(image_input):
     except Exception as e:
         return f"Error: {e}"
 
-# --- APP LAYOUT ---
+# --- 5. APP LAYOUT ---
 
-# 1. THE LOGO (Real Image Version)
-# We use columns to center the image. 
-# [1, 2, 1] means: (Empty Space) - (Logo) - (Empty Space)
-left_co, cent_co, last_co = st.columns([1, 2, 1])
+# A. SMART LOGO LOADER
+left_co, cent_co, last_co = st.columns([1, 4, 1])
 
 with cent_co:
-    # TRY to load the logo. If it fails, show text instead.
-    try:
-        # Make sure your file on GitHub is named EXACTLY "logo.png" (case sensitive!)
-        st.image("logo.png", width=400) 
-    except:
-        st.error("Logo not found. Upload 'logo.png' to GitHub!")
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=350)
+    elif os.path.exists("Logo.png"):
+        st.image("Logo.png", width=350)
+    elif os.path.exists("logo.PNG"):
+        st.image("logo.PNG", width=350)
+    else:
+        st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
+        st.error("⚠️ Tip: Upload 'logo.png' to GitHub!")
 
-st.markdown("Visual Intelligence for Your Kitchen")
+# B. SUBTITLE (With Negative Margin to pull it up)
+st.markdown("""
+    <p style='text-align: center; color: #666; margin-top: -10px; font-size: 16px;'>
+        Visual Intelligence for Your Fridge
+    </p>
+""", unsafe_allow_html=True)
 
-# 2. The Input Area
+# C. INPUT AREA
 col1, col2, col3 = st.columns([1, 6, 1])
 
 with col2:
     tab_cam, tab_up = st.tabs(["📸 Camera", "📂 Upload"])
+    
     image_to_process = None
     
     with tab_cam:
@@ -93,11 +108,12 @@ with col2:
             image_to_process = Image.open(camera_photo)
             
     with tab_up:
-        uploaded_file = st.file_uploader("Choose a file", type=["jpg", "png"])
+        uploaded_file = st.file_uploader("Choose a file", type=["jpg", "png", "jpeg"])
         if uploaded_file:
             image_to_process = Image.open(uploaded_file)
 
-    st.write("")
+    # D. ACTION BUTTON
+    st.write("") 
     if image_to_process:
         if st.button("Generate Recipe"):
             if 'recipe_result' in st.session_state:
@@ -107,9 +123,10 @@ with col2:
             st.session_state.recipe_result = result
             st.rerun()
 
-# --- RESULTS ---
+# --- 6. RESULTS DISPLAY ---
 if 'recipe_result' in st.session_state and st.session_state.recipe_result:
     st.markdown("---")
+    
     if "Error" in st.session_state.recipe_result:
         st.error(st.session_state.recipe_result)
     else:

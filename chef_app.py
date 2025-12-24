@@ -19,8 +19,8 @@ def get_recipe(image_input):
     try:
         genai.configure(api_key=api_key)
         
-        # WE FOUND THE CORRECT NAME!
-        model = genai.GenerativeModel('gemini-2.0-flash') 
+        # USE THE HIGH-LIMIT MODEL FROM YOUR SCREENSHOT
+        model = genai.GenerativeModel('gemini-2.5-flash-lite') 
         
         prompt = """
         You are a creative chef. Look at this image of ingredients.
@@ -40,7 +40,7 @@ def get_recipe(image_input):
 st.title("📸 Iron Chef Vision")
 st.write("Snap a photo of your fridge to get a recipe.")
 
-# Session State (The "Backpack" to prevent API spam)
+# Session State (The Backpack)
 if 'recipe_result' not in st.session_state:
     st.session_state.recipe_result = None
 
@@ -62,12 +62,15 @@ with tab2:
 if image_to_process:
     st.image(image_to_process, caption="Ingredients Detected", width=300)
 
-    # The Button (Only runs when clicked!)
     if st.button("👨‍🍳 Cook Something!"):
+        # Clear previous result first
+        st.session_state.recipe_result = None 
+        
         result = get_recipe(image_to_process)
         st.session_state.recipe_result = result
+        st.rerun() # Force a refresh to show the new result
 
-    # Display Result from Memory
+    # Display Result
     if st.session_state.recipe_result:
         if "Error" in st.session_state.recipe_result:
             st.error(st.session_state.recipe_result)

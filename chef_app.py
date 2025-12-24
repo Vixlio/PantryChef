@@ -21,20 +21,33 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
-# --- 4. CUSTOM CSS ---
+# --- 4. CUSTOM CSS (The "Professional App" Look) ---
 st.markdown("""
     <style>
         h1, h3, p { text-align: center !important; }
         .block-container { padding-top: 1rem; padding-bottom: 0rem; }
+        
+        /* GENERAL BUTTON STYLE (The Pill Shape) */
         div.stButton > button {
-            display: block; margin: 0 auto; background-color: #f8f9fa; 
-            color: #3c4043; border: 1px solid #f8f9fa; border-radius: 4px;
-            padding: 10px 24px; font-size: 18px; font-weight: 500; transition: all 0.3s;
+            border-radius: 50px; /* Makes it a pill */
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Subtle shadow */
+            transition: all 0.3s ease;
         }
+        
+        /* HOVER EFFECT */
         div.stButton > button:hover {
-            background-color: #e8eaed; border: 1px solid #dadce0; color: #202124;
+            transform: translateY(-2px); /* Slight lift */
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
-        #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+
+        /* HIDE UGLY STREAMLIT MENUS */
+        #MainMenu {visibility: hidden;} 
+        footer {visibility: hidden;} 
+        header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -94,7 +107,6 @@ def get_recipe(images, style):
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
-# Initialize Camera State (Default: False/Closed)
 if 'camera_open' not in st.session_state:
     st.session_state.camera_open = False
 
@@ -123,20 +135,18 @@ st.write("")
 st.write("")
 
 # B. INPUT AREA
-# We use a placeholder container for the camera logic
 camera_placeholder = st.empty()
 
-# LOGIC:
-# If camera is NOT open, show the "Start" button
+# --- STATE 1: START SCREEN ---
 if not st.session_state.camera_open:
     st.write("")
     st.write("")
-    # Big, welcoming start button
-    if st.button("📸 Tap to Start Cooking", use_container_width=True):
+    # We use type="primary" to make it the 'Call to Action' color
+    if st.button("📸 Open Kitchen Camera", type="primary", use_container_width=True):
         st.session_state.camera_open = True
         st.rerun()
 
-# If camera IS open, show the camera input
+# --- STATE 2: CAMERA OPEN ---
 else:
     st.markdown("<h3 style='text-align: center; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
     
@@ -147,7 +157,7 @@ else:
             img = Image.open(camera_photo)
             st.session_state.ingredient_images.append(img)
 
-# C. PHOTO GALLERY (Always visible if images exist)
+# C. PHOTO GALLERY
 if len(st.session_state.ingredient_images) > 0:
     st.write("---")
     st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
@@ -157,10 +167,9 @@ if len(st.session_state.ingredient_images) > 0:
         with cols[idx % 3]:
             st.image(img, use_container_width=True)
             
+    # "Secondary" button (Gray) for clearing
     if st.button("Clear Photos & Start Over"):
         st.session_state.ingredient_images = []
-        # Optional: Close camera on clear? 
-        # st.session_state.camera_open = False 
         st.rerun()
 
     st.write("") 
@@ -168,24 +177,4 @@ if len(st.session_state.ingredient_images) > 0:
     # --- VIBE SELECTOR ---
     cooking_style = st.selectbox(
         "What's the vibe today?", 
-        ["🥗 Healthy & Clean", "👨‍🍳 Standard / Modern", "👧 For the Kids", "🍔 Let Myself Go"],
-        index=1
-    )
-    st.write("")
-    
-    if st.button("Generate Recipe", use_container_width=True):
-        if 'recipe_result' in st.session_state:
-            del st.session_state['recipe_result']
-        
-        result = get_recipe(st.session_state.ingredient_images, cooking_style)
-        st.session_state.recipe_result = result
-        st.rerun()
-
-# --- 7. RESULTS DISPLAY ---
-if 'recipe_result' in st.session_state and st.session_state.recipe_result:
-    st.markdown("---")
-    if "Error" in st.session_state.recipe_result:
-        st.error(st.session_state.recipe_result)
-    else:
-        st.subheader("👨‍🍳 Result")
-        st.markdown(st.session_state.recipe_result)
+        ["🥗 Healthy

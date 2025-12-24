@@ -21,7 +21,7 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
-# --- 4. CUSTOM CSS (The "Professional App" Look) ---
+# --- 4. CUSTOM CSS ---
 st.markdown("""
     <style>
         h1, h3, p { text-align: center !important; }
@@ -29,22 +29,21 @@ st.markdown("""
         
         /* GENERAL BUTTON STYLE (The Pill Shape) */
         div.stButton > button {
-            border-radius: 50px; /* Makes it a pill */
+            border-radius: 50px;
             padding: 12px 28px;
             font-size: 16px;
             font-weight: 600;
             border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Subtle shadow */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
         }
         
         /* HOVER EFFECT */
         div.stButton > button:hover {
-            transform: translateY(-2px); /* Slight lift */
+            transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
 
-        /* HIDE UGLY STREAMLIT MENUS */
         #MainMenu {visibility: hidden;} 
         footer {visibility: hidden;} 
         header {visibility: hidden;}
@@ -139,9 +138,18 @@ camera_placeholder = st.empty()
 
 # --- STATE 1: START SCREEN ---
 if not st.session_state.camera_open:
+    # Disclaimer Text
+    st.markdown("""
+        <p style='text-align: center; color: #666; font-size: 15px; max-width: 80%; margin: 0 auto;'>
+            Snap a photo of your fridge, pantry, or leftovers.<br>
+            We'll cook up a custom recipe in seconds.
+        </p>
+    """, unsafe_allow_html=True)
+    
+    st.write("") # Spacer
     st.write("")
-    st.write("")
-    # We use type="primary" to make it the 'Call to Action' color
+    
+    # Primary Start Button
     if st.button("📸 Open Kitchen Camera", type="primary", use_container_width=True):
         st.session_state.camera_open = True
         st.rerun()
@@ -167,7 +175,7 @@ if len(st.session_state.ingredient_images) > 0:
         with cols[idx % 3]:
             st.image(img, use_container_width=True)
             
-    # "Secondary" button (Gray) for clearing
+    # Secondary Clear Button
     if st.button("Clear Photos & Start Over"):
         st.session_state.ingredient_images = []
         st.rerun()
@@ -177,4 +185,25 @@ if len(st.session_state.ingredient_images) > 0:
     # --- VIBE SELECTOR ---
     cooking_style = st.selectbox(
         "What's the vibe today?", 
-        ["🥗 Healthy
+        ["🥗 Healthy & Clean", "👨‍🍳 Standard / Modern", "👧 For the Kids", "🍔 Let Myself Go"],
+        index=1
+    )
+    st.write("")
+    
+    # Primary Generate Button
+    if st.button("Generate Recipe", type="primary", use_container_width=True):
+        if 'recipe_result' in st.session_state:
+            del st.session_state['recipe_result']
+        
+        result = get_recipe(st.session_state.ingredient_images, cooking_style)
+        st.session_state.recipe_result = result
+        st.rerun()
+
+# --- 7. RESULTS DISPLAY ---
+if 'recipe_result' in st.session_state and st.session_state.recipe_result:
+    st.markdown("---")
+    if "Error" in st.session_state.recipe_result:
+        st.error(st.session_state.recipe_result)
+    else:
+        st.subheader("👨‍🍳 Result")
+        st.markdown(st.session_state.recipe_result)

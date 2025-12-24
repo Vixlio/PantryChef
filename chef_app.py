@@ -18,26 +18,25 @@ else:
 # --- 3. CUSTOM CSS ---
 st.markdown("""
     <style>
-        /* FORCE IMAGE CENTERING */
-        div[data-testid="column"] {
+        /* 1. FORCE ALL IMAGES TO CENTER */
+        div[data-testid="stImage"] {
             display: flex;
-            align-items: center; 
             justify-content: center;
         }
-
-        /* REMOVE TOP PADDING */
+        
+        /* 2. REMOVE TOP PADDING */
         .block-container {
-            padding-top: 1rem;
+            padding-top: 2rem;
             padding-bottom: 0rem;
         }
         
-        /* CENTER TEXT */
-        .stMarkdown p {
-            text-align: center;
+        /* 3. CENTER TEXT */
+        .stMarkdown p, .stMarkdown h3 {
+            text-align: center !important;
             color: #666;
         }
         
-        /* BUTTON STYLES */
+        /* 4. BUTTON STYLES */
         div.stButton > button {
             display: block;
             margin: 0 auto;
@@ -94,59 +93,65 @@ def get_recipe(images):
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
-# A. LOGO SECTION (SUPER SIZE)
-# We use [1, 10, 1] to give the middle column MAXIMUM width
-left_co, cent_co, last_co = st.columns([1, 10, 1])
+# A. LOGO SECTION
+# We remove the columns here and just rely on the CSS 'justify-content: center' 
+# which forces the image to the middle of the main container.
+if os.path.exists("logo.png"):
+    st.image("logo.png", width=400) # Adjusted width for balance
+elif os.path.exists("Logo.png"):
+    st.image("Logo.png", width=400)
+elif os.path.exists("logo.PNG"):
+    st.image("logo.PNG", width=400)
+else:
+    st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
 
-with cent_co:
-    if os.path.exists("logo.png"):
-        # Width increased to 500px (or as wide as the phone screen allows)
-        st.image("logo.png", width=500)
-    elif os.path.exists("Logo.png"):
-        st.image("Logo.png", width=500)
-    elif os.path.exists("logo.PNG"):
-        st.image("logo.PNG", width=500)
-    else:
-        st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
+# Subtitle
+st.markdown("""
+    <p style='text-align: center; color: #666; margin-top: -15px; font-size: 16px;'>
+        Visual Intelligence for Your Kitchen, Powered by Google Gemini
+    </p>
+""", unsafe_allow_html=True)
 
-    # Subtitle with AGGRESSIVE negative margin (-35px)
-    st.markdown("""
-        <p style='text-align: center; color: #666; margin-top: -35px; font-size: 16px;'>
-            Visual Intelligence for Your Kitchen, Powered by Google Gemini
-        </p>
-    """, unsafe_allow_html=True)
+# Spacer
+st.write("")
+st.write("")
 
 # B. INPUT AREA
-col1, col2, col3 = st.columns([1, 6, 1])
+# 1. Custom Centered Header (Replacing the default camera label)
+st.markdown("<h3 style='text-align: center; color: #333; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
 
+# 2. Camera Input (Label hidden because we made our own above)
+# We use a trick to center the camera widget by putting it in a centered column
+col1, col2, col3 = st.columns([1, 8, 1])
 with col2:
-    # 1. CAMERA INPUT
-    camera_photo = st.camera_input("Snap a photo of your ingredients")
+    camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
     
     if camera_photo:
         img = Image.open(camera_photo)
-        # Avoid adding duplicates if the user hasn't snapped a new one
-        # (Simple logic: if the last image in the list is the same, skip)
         st.session_state.ingredient_images.append(img)
+        # We don't rerun immediately so they can keep snapping quickly
 
-    # 2. PHOTO GALLERY (The "Basket")
+    # C. PHOTO GALLERY (The "Basket")
     if len(st.session_state.ingredient_images) > 0:
         st.write("---")
         st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
         
+        # Display thumbnails in rows of 3
         cols = st.columns(3)
         for idx, img in enumerate(st.session_state.ingredient_images):
             with cols[idx % 3]:
                 st.image(img, use_container_width=True)
                 
+        # Clear Button
         if st.button("Clear Photos & Start Over"):
             st.session_state.ingredient_images = []
             st.rerun()
 
-    # C. ACTION BUTTON
+    # D. ACTION BUTTON
     st.write("") 
     if len(st.session_state.ingredient_images) > 0:
-        if st.button("Generate Recipe"):
+        # Use a full width button in the center column
+        if st.button("Generate Recipe", use_container_width=True):
             if 'recipe_result' in st.session_state:
                 del st.session_state['recipe_result']
             

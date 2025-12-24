@@ -32,7 +32,7 @@ st.markdown("""
         }
         .block-container { padding-top: 1rem; padding-bottom: 0rem; }
         
-        /* 2. BUTTON STYLING */
+        /* 2. STANDARD BUTTON STYLING (The "Pill") */
         div.stButton > button {
             border-radius: 50px;
             padding: 14px 32px;
@@ -58,7 +58,26 @@ st.markdown("""
             border: 1px solid #6A1B9A !important;
         }
 
-        /* 4. HIDE DEFAULT ELEMENTS */
+        /* 4. FORCE CAMERA "TAKE PHOTO" BUTTON TO MATCH */
+        div[data-testid="stCameraInput"] button {
+            border-radius: 50px !important;
+            background-color: #8A2BE2 !important; /* Purple */
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            padding: 14px 32px !important;
+            border: none !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+            transition: all 0.3s ease !important;
+            text-transform: none !important; /* Prevents ALL CAPS if set by browser */
+        }
+        div[data-testid="stCameraInput"] button:hover {
+            background-color: #6A1B9A !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15) !important;
+        }
+
+        /* 5. HIDE DEFAULT ELEMENTS */
         #MainMenu {visibility: hidden;} 
         footer {visibility: hidden;} 
         header {visibility: hidden;}
@@ -164,6 +183,7 @@ else:
     
     col1, col2, col3 = st.columns([1, 10, 1])
     with col2:
+        # Camera Widget
         camera_photo = st.camera_input(
             label="Snap Photo", 
             label_visibility="hidden", 
@@ -191,7 +211,6 @@ else:
 if len(st.session_state.ingredient_images) > 0:
     st.write("")
     
-    # Check if 'container' is supported (it usually is)
     with st.container(border=True):
         st.markdown(f"<p style='text-align: center; margin-bottom: 10px;'><b>🛒 Your Basket ({len(st.session_state.ingredient_images)} items)</b></p>", unsafe_allow_html=True)
         

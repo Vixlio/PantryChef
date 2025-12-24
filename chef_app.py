@@ -30,10 +30,10 @@ st.markdown("""
             padding-bottom: 0rem;
         }
         
-        /* 3. CENTER TEXT */
+        /* 3. CENTER TEXT & FIX COLORS FOR DARK MODE */
         .stMarkdown p, .stMarkdown h3 {
             text-align: center !important;
-            color: #666;
+            color: #E0E0E0 !important; /* Light Gray for visibility */
         }
         
         /* 4. BUTTON STYLES */
@@ -50,9 +50,8 @@ st.markdown("""
             transition: all 0.3s;
         }
         div.stButton > button:hover {
-            background-color: #f8f9fa;
+            background-color: #e8eaed;
             border: 1px solid #dadce0;
-            box-shadow: 0 1px 1px rgba(0,0,0,.1);
             color: #202124;
         }
         
@@ -93,35 +92,36 @@ def get_recipe(images):
 if 'ingredient_images' not in st.session_state:
     st.session_state.ingredient_images = []
 
-# A. LOGO SECTION
-# We remove the columns here and just rely on the CSS 'justify-content: center' 
-# which forces the image to the middle of the main container.
-if os.path.exists("logo.png"):
-    st.image("logo.png", width=400) # Adjusted width for balance
-elif os.path.exists("Logo.png"):
-    st.image("Logo.png", width=400)
-elif os.path.exists("logo.PNG"):
-    st.image("logo.PNG", width=400)
-else:
-    st.markdown("<h1 style='text-align: center; color: #333;'>ChefLens</h1>", unsafe_allow_html=True)
+# A. LOGO SECTION (Centered Column Sandwich)
+# We use [1, 2, 1] to squeeze the logo into the center
+left_co, cent_co, last_co = st.columns([1, 2, 1])
 
-# Subtitle
-st.markdown("""
-    <p style='text-align: center; color: #666; margin-top: -15px; font-size: 16px;'>
-        Visual Intelligence for Your Kitchen, Powered by Google Gemini
-    </p>
-""", unsafe_allow_html=True)
+with cent_co:
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=350) 
+    elif os.path.exists("Logo.png"):
+        st.image("Logo.png", width=350)
+    elif os.path.exists("logo.PNG"):
+        st.image("logo.PNG", width=350)
+    else:
+        st.markdown("<h1 style='text-align: center; color: white;'>ChefLens</h1>", unsafe_allow_html=True)
+
+    # Subtitle (Light Gray)
+    st.markdown("""
+        <p style='text-align: center; color: #B0B0B0; margin-top: -15px; font-size: 16px;'>
+            Visual Intelligence for Your Kitchen
+        </p>
+    """, unsafe_allow_html=True)
 
 # Spacer
 st.write("")
 st.write("")
 
 # B. INPUT AREA
-# 1. Custom Centered Header (Replacing the default camera label)
-st.markdown("<h3 style='text-align: center; color: #333; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
+# 1. Custom Centered Header (White Text)
+st.markdown("<h3 style='text-align: center; color: white; font-size: 20px;'>Snap a photo of your ingredients</h3>", unsafe_allow_html=True)
 
-# 2. Camera Input (Label hidden because we made our own above)
-# We use a trick to center the camera widget by putting it in a centered column
+# 2. Camera Input
 col1, col2, col3 = st.columns([1, 8, 1])
 with col2:
     camera_photo = st.camera_input(label="Snap Photo", label_visibility="hidden")
@@ -129,14 +129,14 @@ with col2:
     if camera_photo:
         img = Image.open(camera_photo)
         st.session_state.ingredient_images.append(img)
-        # We don't rerun immediately so they can keep snapping quickly
+        # We don't rerun immediately so you can keep snapping
 
     # C. PHOTO GALLERY (The "Basket")
     if len(st.session_state.ingredient_images) > 0:
         st.write("---")
-        st.markdown(f"<p style='text-align: center;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; color: white;'><b>{len(st.session_state.ingredient_images)} Photos Captured</b></p>", unsafe_allow_html=True)
         
-        # Display thumbnails in rows of 3
+        # Display thumbnails
         cols = st.columns(3)
         for idx, img in enumerate(st.session_state.ingredient_images):
             with cols[idx % 3]:
@@ -150,7 +150,6 @@ with col2:
     # D. ACTION BUTTON
     st.write("") 
     if len(st.session_state.ingredient_images) > 0:
-        # Use a full width button in the center column
         if st.button("Generate Recipe", use_container_width=True):
             if 'recipe_result' in st.session_state:
                 del st.session_state['recipe_result']
